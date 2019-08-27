@@ -36,7 +36,7 @@ int main(int argc, char* argv[]){
 	ppoly_ans.coeff.a0 = ppoly_ans_GFMp31.coeff.a0;
 	ppoly_ans.coeff.a1 = ppoly_ans_GFMp31.coeff.a1;
 	print_quadratic(ppoly_ans, Mp31, "\n");
-	const GF_Mp31_2_t proot2 = {.Z.Re = 7,.Z.Im = 2};
+	const GF_Mp31_2_t proot2 = {.Z.Re = 8,.Z.Im = 3};
 	const uint64_t NTT_N
 		= (uint64_t)Mp31*(uint64_t)Mp31-1;
 	for(int i = 0; i < 10; i++){
