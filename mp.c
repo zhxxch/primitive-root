@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include<stdint.h>
 #include<math.h>
-#include"GF_Mp31.h"
+#include"GF_M31.h"
 #include"GF_p.h"
 
 void print_quadratic(const GFp2_t q,
@@ -27,24 +27,25 @@ void print_GFp2_Z(const uint32_t Re, const uint32_t Im,
 		signRe, print_Re, signIm, print_Im, delimiter);
 }
 int main(int argc, char* argv[]){
-	const GF_Mp31_2_t id_elem = {1,0};
-	const GF_Mp31_2_t poly_x = {0,1};
-	const GF_Mp31_2_t poly_0 = {1,1};
+	const GF_M31_2_t id_elem = {1,0};
+	const GF_M31_2_t poly_x = {0,1};
+	const GF_M31_2_t poly_0 = {1,1};
+	const GF_M31_t M31 = (1u << 31) - 1;
 	GFp2_t ppoly_ans;
-	GF_Mp31_2_t ppoly_ans_GFMp31
-		= iter_GF_Mp31_2_ppoly_test(poly_0);
-	ppoly_ans.coeff.a0 = ppoly_ans_GFMp31.coeff.a0;
-	ppoly_ans.coeff.a1 = ppoly_ans_GFMp31.coeff.a1;
-	print_quadratic(ppoly_ans, Mp31, "\n");
-	const GF_Mp31_2_t proot2 = {.Z.Re = 8,.Z.Im = 3};
+	GF_M31_2_t ppoly_ans_GFM31
+		= iter_GF_M31_2_ppoly_test(poly_0);
+	ppoly_ans.coeff.a0 = ppoly_ans_GFM31.coeff.a0;
+	ppoly_ans.coeff.a1 = ppoly_ans_GFM31.coeff.a1;
+	print_quadratic(ppoly_ans, M31, "\n");
+	const GF_M31_2_t proot2 = {.Z.Re = 8,.Z.Im = 3};
 	const uint64_t NTT_N
-		= (uint64_t)Mp31*(uint64_t)Mp31-1;
+		= (uint64_t)M31*(uint64_t)M31-1;
 	for(int i = 0; i < 10; i++){
 		printf("x^(N/%i) = ", (1<<i));
-		const GF_Mp31_2_t rs_complex = pow_GF_Mp31_2_Z(
+		const GF_M31_2_t rs_complex = pow_GF_M31_2_Z(
 			proot2, NTT_N / (1ull << i));
 			print_GFp2_Z(rs_complex.Z.Re,
-				rs_complex.Z.Im, Mp31, "\n");
+				rs_complex.Z.Im, M31, "\n");
 	}
 	return(0);
 }
