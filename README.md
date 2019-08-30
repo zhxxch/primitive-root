@@ -47,3 +47,7 @@ x<sup>2</sup>-14x+53（原根7±2i）
 x<sup>2</sup>-16x+73（原根8±3i）
 
 对本原多项式w(x)=x<sup>2</sup>+a<sub>1</sub>x+a<sub>0</sub>，x<sup>2</sup>-a<sub>1</sub>x+a<sub>0</sub>也是本原多项式。
+
+### GF((3*2^30+1)^2)
+
+### GF((15*2^27+1)^2)

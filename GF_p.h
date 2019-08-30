@@ -160,15 +160,15 @@ GFp2_t iter_ppoly_test(
 	const GFp2_t min, Z64_ct p,
 	Z64_ct num_factors_GFp, Z64_ct num_factors_GFp2,
 	Z64_ct exps_GFp[], Z64_ct exps_GFp2[]){
-	for(GFp2_t x = min; x.coeff.a0 < p; x.coeff.a0++){
-		if(!is_proot(
-			x.coeff.a0, p, num_factors_GFp, exps_GFp)){
-			continue;
-		}
-		for(x.coeff.a1 = min.coeff.a1;
-			x.coeff.a1 < p; x.coeff.a1++){
-			if(is_ppolynomial(x, p, num_factors_GFp2, exps_GFp2)){
-				return x;
+	for(GFp2_t x = min; x.coeff.a1 < p; x.coeff.a1++){
+		for(x.coeff.a0 = min.coeff.a0;
+			x.coeff.a0 < p; x.coeff.a0++){
+			if(is_proot(x.coeff.a0, p,
+				num_factors_GFp, exps_GFp)){
+				if(is_ppolynomial(
+					x, p, num_factors_GFp2, exps_GFp2)){
+					return x;
+				}
 			}
 		}
 	}
