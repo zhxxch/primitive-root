@@ -67,6 +67,7 @@ int main(int argc, char* argv[]){
 		print_GFp2_Z(rs_complex.Z.Re,
 			rs_complex.Z.Im, M31, "\n");
 	}
+#if 0
 	Z64_ct F3_30 = 3 * (1u << 30) + 1;
 	Z64_ct F3_30_Factors[] = {2,3};
 	Z64_ct F3_30_2_Factors[] = {2,3,79,20387503};
@@ -84,7 +85,6 @@ int main(int argc, char* argv[]){
 			ppoly_F3_30_ans
 				= iter_ppoly_test(ppoly_F3_30_ans, F3_30,
 					2, 4, F3_30_test_F, F3_30_2_test_F);
-			/*print_quadratic(ppoly_F3_30_ans, F3_30, "\t");*/
 			Z64_ct a = (ppoly_F3_30_ans.coeff.a1 / 2);
 			Z64_ct b_sq = ppoly_F3_30_ans.coeff.a0 - a * a;
 			Z64_ct b_sqrt = (Z64_t)floor(sqrt((double)b_sq));
@@ -102,5 +102,6 @@ int main(int argc, char* argv[]){
 			printf("%lli/1024\n", i / ((F3_30 - 1) / (2 * 1024)));
 		}
 	}
+#endif
 	return(0);
 }

@@ -22,6 +22,8 @@
 #vim swap
 *.swp
 
+*.diagsession
+
 tags
 #CMake
 CMakeCache.txt
