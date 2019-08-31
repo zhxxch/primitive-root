@@ -40,7 +40,19 @@ typedef union{
 	struct{ GF_M31_t a0; GF_M31_t a1; }coeff;
 	struct{ GF_M31_t Re; GF_M31_t Im; }Z;
 }GF_M31_2_t;
-
+const GF_M31_2_t GF_M31_Primitive_Root1
+= {.Z.Re = 8,.Z.Im = 3};
+const GF_M31_2_t GF_M31_Primitive_Root2
+= {.Z.Re = 7,.Z.Im = 2};
+const GF_M31_2_t GF_M31_GaloisTf_W[] = {
+	{1,0},{0x7ffffffeu,0},
+{0,1},{ 0x8000u,0x8000u },
+{0x233668e2u,0x45abdd8au},
+{0x39aea997u,0x49fb5248u},
+{0x1b389fb1u,0x5d739c92u},
+{0x705f4834u,0x1858e449u},
+{0x405c70e7u,0x0bc8aa05u}
+};
 GF_M31_t add_GF_M31(
 	const GF_M31_t a, const GF_M31_t b){
 	const GF_M31_t M31 = (1u << 31) - 1;
@@ -168,12 +180,15 @@ GF_M31_2_t iter_GF_M31_2_ppoly_test(
 GF_M31_2_t mul_GF_M31_2_Z(
 	const GF_M31_2_t a, const GF_M31_2_t b){
 	GF_M31_2_t ans = {0};
-	ans.Z.Re = sub_GF_M31(
-		mul_GF_M31(a.Z.Re, b.Z.Re),
-		mul_GF_M31(a.Z.Im, b.Z.Im));
-	ans.Z.Im = add_GF_M31(
-		mul_GF_M31(a.Z.Re, b.Z.Im),
-		mul_GF_M31(a.Z.Im, b.Z.Re));
+	const GF_M31_t
+		ar_ai = add_GF_M31(a.Z.Re, a.Z.Im),
+		br_bi = add_GF_M31(b.Z.Re, b.Z.Im),
+		ar_br = mul_GF_M31(a.Z.Re, b.Z.Re),
+		ai_bi = mul_GF_M31(a.Z.Im, b.Z.Im),
+		aa_bb = mul_GF_M31(ar_ai, br_bi),
+		a_b = add_GF_M31(ar_br, ai_bi);
+	ans.Z.Re = sub_GF_M31(ar_br, ai_bi);
+	ans.Z.Im = sub_GF_M31(aa_bb, a_b);
 	return ans;
 }
 GF_M31_2_t add_GF_M31_2_Z(

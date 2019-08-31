@@ -23,7 +23,7 @@ void print_GFp2_Z(const uint32_t Re, const uint32_t Im,
 	const char *signRe = Re < nRe ? "" : "-";
 	const char *signIm = Im < nIm ? "+" : "-";
 	printf("(%s0x%x%s0x%xi)%s",
-		signRe, print_Re, signIm, print_Im, delimiter);
+		"", Re, "+", Im, delimiter);
 }
 int main(int argc, char* argv[]){
 	const GF_M31_2_t id_elem = {1,0};
@@ -39,17 +39,17 @@ int main(int argc, char* argv[]){
 	const GF_M31_2_t proot2 = {.Z.Re = 8,.Z.Im = 3};
 	const uint64_t NTT_N_M31
 		= (uint64_t)M31*(uint64_t)M31 - 1;
-	for(int i = 0; i < 5; i++){
+	for(int i = 0; i < 9; i++){
 		printf("w_M31^(N/%i) = ", (1 << i));
 		const GF_M31_2_t rs_complex = pow_GF_M31_2_Z(
 			proot2, NTT_N_M31 / (1ull << i));
 		print_GFp2_Z(rs_complex.Z.Re,
 			rs_complex.Z.Im, M31, "\n");
 	}
-	for(int k = 0; k <= 8; k++){
-		printf("w_M31^(%i*N/8) = ", k);
+	for(int k = 0; k <= 256; k++){
+		printf("w_M31^(%i*N/256) = ", k);
 		const GF_M31_2_t rs_complex = pow_GF_M31_2_Z(
-			proot2, k*(NTT_N_M31 / 8));
+			proot2, k*(NTT_N_M31 / 256));
 		print_GFp2_Z(rs_complex.Z.Re,
 			rs_complex.Z.Im, M31, "\n");
 	}
