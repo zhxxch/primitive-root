@@ -1,1 +1,4 @@
-theme: jekyll-theme-slate
+title: Primitive Root
+description: 求解原根
+show_downloads: true
+theme: jekyll-theme-minimal
