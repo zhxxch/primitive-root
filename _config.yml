@@ -4,4 +4,5 @@ show_downloads: true
 lang: zh-CN
 author:
   name: ZXC
+logo: https://ak.hypergryph.com/upload/images/20190228/b18b912d69fa0b3d571054c8f5fda5cf.jpg
 theme: jekyll-theme-minimal
