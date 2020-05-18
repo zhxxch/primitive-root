@@ -1,4 +1,7 @@
-title: Primitive Root
-description: 求解原根
+title: 原根 - Primitive root
+description: 求解原根的数学和编程
 show_downloads: true
+lang: zh-CN
+author:
+  name: ZXC
 theme: jekyll-theme-minimal
