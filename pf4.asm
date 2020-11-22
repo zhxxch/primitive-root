@@ -59,20 +59,14 @@ PUBLIC	speck64u96
 PUBLIC	printf
 PUBLIC	_vfprintf_l
 PUBLIC	__local_stdio_printf_options
-PUBLIC	__isa_available_default
-PUBLIC	__xmm@0000ffff0000ffff0000ffff0000ffff
-PUBLIC	__xmm@00010000000100000001000000010000
-EXTRN	__isa_available:DWORD
+PUBLIC	__ymm@0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff
+PUBLIC	__ymm@0001000000010000000100000001000000010000000100000001000000010000
 COMM	?_OptionsStorage@?1??__local_stdio_printf_options@@9@9:QWORD							; `__local_stdio_printf_options'::`2'::_OptionsStorage
 _DATA	ENDS
-;	COMDAT __isa_available_default
-_BSS	SEGMENT
-__isa_available_default DD 01H DUP (?)
-_BSS	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$main DD	imagerel $LN29
-	DD	imagerel $LN29+227
+	DD	imagerel $LN29+210
 	DD	imagerel $unwind$main
 pdata	ENDS
 ;	COMDAT pdata
@@ -84,20 +78,8 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$vec_mod_pf4 DD imagerel $LN18
-	DD	imagerel $LN18+59
+	DD	imagerel $LN18+296
 	DD	imagerel $unwind$vec_mod_pf4
-pdata	ENDS
-;	COMDAT pdata
-pdata	SEGMENT
-$pdata$2$vec_mod_pf4 DD imagerel $LN18+59
-	DD	imagerel $LN18+315
-	DD	imagerel $chain$2$vec_mod_pf4
-pdata	ENDS
-;	COMDAT pdata
-pdata	SEGMENT
-$pdata$3$vec_mod_pf4 DD imagerel $LN18+315
-	DD	imagerel $LN18+415
-	DD	imagerel $chain$3$vec_mod_pf4
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
@@ -153,15 +135,19 @@ $pdata$_vfprintf_l DD imagerel $LN4
 	DD	imagerel $LN4+68
 	DD	imagerel $unwind$_vfprintf_l
 pdata	ENDS
-;	COMDAT __xmm@00010000000100000001000000010000
+;	COMDAT __ymm@0001000000010000000100000001000000010000000100000001000000010000
 CONST	SEGMENT
-__xmm@00010000000100000001000000010000 DB 00H, 00H, 01H, 00H, 00H, 00H, 01H
-	DB	00H, 00H, 00H, 01H, 00H, 00H, 00H, 01H, 00H
+__ymm@0001000000010000000100000001000000010000000100000001000000010000 DB 00H
+	DB	00H, 01H, 00H, 00H, 00H, 01H, 00H, 00H, 00H, 01H, 00H, 00H, 00H
+	DB	01H, 00H, 00H, 00H, 01H, 00H, 00H, 00H, 01H, 00H, 00H, 00H, 01H
+	DB	00H, 00H, 00H, 01H, 00H
 CONST	ENDS
-;	COMDAT __xmm@0000ffff0000ffff0000ffff0000ffff
+;	COMDAT __ymm@0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff
 CONST	SEGMENT
-__xmm@0000ffff0000ffff0000ffff0000ffff DB 0ffH, 0ffH, 00H, 00H, 0ffH, 0ffH
-	DB	00H, 00H, 0ffH, 0ffH, 00H, 00H, 0ffH, 0ffH, 00H, 00H
+__ymm@0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff DB 0ffH
+	DB	0ffH, 00H, 00H, 0ffH, 0ffH, 00H, 00H, 0ffH, 0ffH, 00H, 00H, 0ffH
+	DB	0ffH, 00H, 00H, 0ffH, 0ffH, 00H, 00H, 0ffH, 0ffH, 00H, 00H, 0ffH
+	DB	0ffH, 00H, 00H, 0ffH, 0ffH, 00H, 00H
 CONST	ENDS
 ;	COMDAT xdata
 xdata	SEGMENT
@@ -231,25 +217,13 @@ $unwind$test_mod_pf4 DD 020601H
 xdata	ENDS
 ;	COMDAT xdata
 xdata	SEGMENT
-$chain$3$vec_mod_pf4 DD 021H
-	DD	imagerel $LN18
-	DD	imagerel $LN18+59
-	DD	imagerel $unwind$vec_mod_pf4
-xdata	ENDS
-;	COMDAT xdata
-xdata	SEGMENT
-$chain$2$vec_mod_pf4 DD 061821H
-	DD	08818H
-	DD	01780aH
-	DD	026805H
-	DD	imagerel $LN18
-	DD	imagerel $LN18+59
-	DD	imagerel $unwind$vec_mod_pf4
-xdata	ENDS
-;	COMDAT xdata
-xdata	SEGMENT
-$unwind$vec_mod_pf4 DD 020601H
-	DD	030025206H
+$unwind$vec_mod_pf4 DD 0b2801H
+	DD	08981fH
+	DD	09881aH
+	DD	0a7815H
+	DD	0b6810H
+	DD	018010bH
+	DD	05004H
 xdata	ENDS
 ;	COMDAT xdata
 xdata	SEGMENT
@@ -258,11 +232,9 @@ $unwind$fill_list_rand DD 020501H
 xdata	ENDS
 ;	COMDAT xdata
 xdata	SEGMENT
-$unwind$main DD	081401H
-	DD	086414H
-	DD	075414H
-	DD	063414H
-	DD	070103214H
+$unwind$main DD	040a01H
+	DD	06340aH
+	DD	07006320aH
 xdata	ENDS
 ; Function compile flags: /Ogtpy
 ; File C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt\corecrt_stdio_config.h
@@ -1121,203 +1093,163 @@ _TEXT	ENDS
 ; File C:\Users\user\Desktop\primitive-root\pf4.c
 ;	COMDAT vec_mod_pf4
 _TEXT	SEGMENT
-Num$dead$ = 64
-IterRes$ = 72
-IterA$ = 80
-IterB$ = 88
+tv167 = 0
+tv173 = 32
+tv176 = 64
+Num$dead$ = 208
+IterRes$ = 216
+IterA$ = 224
+IterB$ = 232
 vec_mod_pf4 PROC					; COMDAT
 
-; 98   : 	int32_t *restrict IterB) {
+; 99   : 	uint16_t *restrict IterB) {
 
 $LN18:
-	push	rbx
-	sub	rsp, 48					; 00000030H
-	mov	r11, r9
-	mov	rbx, rdx
-
-; 99   : 	for(int i = 0; i < Num; i++) {
-
-	sub	r11, r8
-	sub	rbx, r8
-	xor	ecx, ecx
-	cmp	DWORD PTR __isa_available, 2
-	jl	$LN11@vec_mod_pf
-	movdqa	xmm5, XMMWORD PTR __xmm@0000ffff0000ffff0000ffff0000ffff
+	mov	rax, rsp
+	push	rbp
+	sub	rsp, 192				; 000000c0H
+	vmovaps	XMMWORD PTR [rax-24], xmm6
+	vmovaps	XMMWORD PTR [rax-40], xmm7
+	vmovaps	XMMWORD PTR [rax-56], xmm8
+	vmovaps	XMMWORD PTR [rax-72], xmm9
+	lea	rbp, QWORD PTR [rsp+32]
+	and	rbp, -32				; ffffffffffffffe0H
+	vmovdqu	ymm5, YMMWORD PTR __ymm@0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff
+	vmovdqu	ymm6, YMMWORD PTR __ymm@0001000000010000000100000001000000010000000100000001000000010000
 	mov	eax, 16
-	movdqa	xmm4, XMMWORD PTR __xmm@00010000000100000001000000010000
-	mov	ecx, 125000				; 0001e848H
-	movaps	XMMWORD PTR [rsp+32], xmm6
-	movaps	XMMWORD PTR [rsp+16], xmm7
-	movd	xmm6, eax
-	mov	eax, 15
-	movaps	XMMWORD PTR [rsp], xmm8
-	movd	xmm7, eax
+
+; 100  : 	for(int i = 0; i < Num; i++) {
+
+	xor	ecx, ecx
+	vmovd	xmm2, eax
 	mov	eax, 31
-	movd	xmm8, eax
+	sub	r9, r8
+
+; 21   : 	const uint32_t srem
+
+	vmovdqu	YMMWORD PTR tv167[rbp], ymm2
+
+; 100  : 	for(int i = 0; i < Num; i++) {
+
+	vmovdqu	xmm7, XMMWORD PTR tv167[rbp]
+	vmovd	xmm2, eax
+	mov	eax, 15
+
+; 23   : 	const uint32_t rem = srem
+
+	vmovdqu	YMMWORD PTR tv173[rbp], ymm2
+
+; 100  : 	for(int i = 0; i < Num; i++) {
+
+	vmovdqu	xmm8, XMMWORD PTR tv173[rbp]
+	vmovd	xmm2, eax
+
+; 23   : 	const uint32_t rem = srem
+
+	vmovdqu	YMMWORD PTR tv176[rbp], ymm2
+
+; 100  : 	for(int i = 0; i < Num; i++) {
+
+	vmovdqu	xmm9, XMMWORD PTR tv176[rbp]
 	lea	rax, QWORD PTR [r8+16]
-	npad	11
+	npad	6
 $LL4@vec_mod_pf:
 
-; 100  : #if 1
-; 101  : 		IterRes[i]
-; 102  : 			= mul_mod_pf4_shr(IterA[i], IterB[i]);
+; 101  : #if 1
+; 102  : 		IterRes[i]
+; 103  : 			= add_mod_pf4_shr(IterA[i], IterB[i]);
 
-	movdqu	xmm0, XMMWORD PTR [r11+rax-16]
-	movdqu	xmm1, XMMWORD PTR [rax-16]
+	vpmovzxwd ymm2, XMMWORD PTR [rax-16]
+	vpmovzxwd ymm0, XMMWORD PTR [r9+rax-16]
+
+; 20   : 	const uint32_t acc = a + b;
+
+	vpaddd	ymm3, ymm0, ymm2
+
+; 21   : 	const uint32_t srem
+
+	vpand	ymm1, ymm3, ymm5
+	vpsrld	ymm0, ymm3, xmm7
+	vpsubd	ymm4, ymm1, ymm0
+
+; 22   : 		= (acc & 0xffffu) - (acc >> 16);
+; 23   : 	const uint32_t rem = srem
+
+	vpsrld	ymm0, ymm4, xmm9
+	vpand	ymm1, ymm0, ymm6
+
+; 101  : #if 1
+; 102  : 		IterRes[i]
+; 103  : 			= add_mod_pf4_shr(IterA[i], IterB[i]);
+
+	vpmovzxwd ymm0, XMMWORD PTR [r9+rax]
+
+; 23   : 	const uint32_t rem = srem
+
+	vpsrld	ymm2, ymm4, xmm8
+	vpaddd	ymm2, ymm1, ymm2
+	vpaddd	ymm3, ymm2, ymm4
+
+; 101  : #if 1
+; 102  : 		IterRes[i]
+; 103  : 			= add_mod_pf4_shr(IterA[i], IterB[i]);
+
+	vpmovzxwd ymm2, XMMWORD PTR [rax]
+
+; 20   : 	const uint32_t acc = a + b;
+
+	vpaddd	ymm2, ymm0, ymm2
+
+; 21   : 	const uint32_t srem
+
+	vpand	ymm1, ymm2, ymm5
+	vpsrld	ymm0, ymm2, xmm7
+
+; 101  : #if 1
+; 102  : 		IterRes[i]
+; 103  : 			= add_mod_pf4_shr(IterA[i], IterB[i]);
+
+	vmovdqu	YMMWORD PTR [rdx+rcx*4], ymm3
+
+; 21   : 	const uint32_t srem
+
+	vpsubd	ymm3, ymm1, ymm0
+
+; 22   : 		= (acc & 0xffffu) - (acc >> 16);
+; 23   : 	const uint32_t rem = srem
+
+	vpsrld	ymm0, ymm3, xmm9
+	vpsrld	ymm2, ymm3, xmm8
+	vpand	ymm1, ymm0, ymm6
+	vpaddd	ymm2, ymm1, ymm2
+	vpaddd	ymm3, ymm2, ymm3
+
+; 101  : #if 1
+; 102  : 		IterRes[i]
+; 103  : 			= add_mod_pf4_shr(IterA[i], IterB[i]);
+
+	vmovdqu	YMMWORD PTR [rdx+rcx*4+32], ymm3
+	add	rcx, 16
 	lea	rax, QWORD PTR [rax+32]
+	cmp	rcx, 1000000				; 000f4240H
+	jl	SHORT $LL4@vec_mod_pf
+	vzeroupper
 
-; 30   : 	const uint32_t pd_lo = a * b;
+; 104  : #else
+; 105  : 		IterRes[i]
+; 106  : 			= ((uint32_t)IterA[i] + (uint32_t)IterB[i])
+; 107  : 			% 0x10001u;
+; 108  : #endif
+; 109  : 	}
+; 110  : }
 
-	movdqa	xmm2, xmm1
-
-; 31   : 	const uint32_t pd_hi = a & b & 0x10000u;
-
-	pand	xmm1, xmm0
-	pand	xmm1, xmm4
-	pmulld	xmm2, xmm0
-
-; 32   : 	const uint32_t srem = (pd_lo & 0xffffu) - pd_hi
-
-	movdqa	xmm3, xmm2
-	pand	xmm3, xmm5
-	psubd	xmm3, xmm1
-	psrld	xmm2, xmm6
-	psubd	xmm3, xmm2
-
-; 33   : 		- ((pd_lo & 0xffff0000u) >> 16);
-; 34   : 	const uint32_t rem = srem
-
-	movdqa	xmm1, xmm3
-	movdqa	xmm0, xmm3
-
-; 100  : #if 1
-; 101  : 		IterRes[i]
-; 102  : 			= mul_mod_pf4_shr(IterA[i], IterB[i]);
-
-	movdqu	xmm2, XMMWORD PTR [r11+rax-32]
-
-; 34   : 	const uint32_t rem = srem
-
-	psrld	xmm1, xmm7
-	psrld	xmm0, xmm8
-	pand	xmm1, xmm4
-	paddd	xmm1, xmm0
-	paddd	xmm1, xmm3
-
-; 100  : #if 1
-; 101  : 		IterRes[i]
-; 102  : 			= mul_mod_pf4_shr(IterA[i], IterB[i]);
-
-	movdqu	xmm0, XMMWORD PTR [rax-32]
-	movdqu	XMMWORD PTR [rbx+rax-48], xmm1
-
-; 30   : 	const uint32_t pd_lo = a * b;
-
-	movdqa	xmm1, xmm0
-	pmulld	xmm1, xmm2
-
-; 32   : 	const uint32_t srem = (pd_lo & 0xffffu) - pd_hi
-
-	movdqa	xmm3, xmm1
-	pand	xmm2, xmm0
-	pand	xmm3, xmm5
-	pand	xmm2, xmm4
-	psubd	xmm3, xmm2
-	psrld	xmm1, xmm6
-	psubd	xmm3, xmm1
-
-; 33   : 		- ((pd_lo & 0xffff0000u) >> 16);
-; 34   : 	const uint32_t rem = srem
-
-	movdqa	xmm1, xmm3
-	movdqa	xmm0, xmm3
-	psrld	xmm1, xmm7
-	psrld	xmm0, xmm8
-	pand	xmm1, xmm4
-	paddd	xmm1, xmm0
-	paddd	xmm1, xmm3
-
-; 100  : #if 1
-; 101  : 		IterRes[i]
-; 102  : 			= mul_mod_pf4_shr(IterA[i], IterB[i]);
-
-	movdqu	XMMWORD PTR [rbx+rax-32], xmm1
-	sub	rcx, 1
-	jne	$LL4@vec_mod_pf
-	movaps	xmm8, XMMWORD PTR [rsp]
-	movaps	xmm7, XMMWORD PTR [rsp+16]
-	movaps	xmm6, XMMWORD PTR [rsp+32]
-
-; 103  : #else
-; 104  : 		IterRes[i] = (IterA[i] * IterB[i]) % 0x10001u;
-; 105  : #endif
-; 106  : 	}
-; 107  : }
-
-	add	rsp, 48					; 00000030H
-	pop	rbx
-	ret	0
-$LN11@vec_mod_pf:
-
-; 99   : 	for(int i = 0; i < Num; i++) {
-
-	mov	r10d, 1000000				; 000f4240H
-	lea	rax, QWORD PTR [r8+rcx*4]
-	sub	r10, rcx
-	npad	8
-$LL10@vec_mod_pf:
-
-; 100  : #if 1
-; 101  : 		IterRes[i]
-; 102  : 			= mul_mod_pf4_shr(IterA[i], IterB[i]);
-
-	mov	edx, DWORD PTR [rax]
-	lea	rax, QWORD PTR [rax+4]
-
-; 30   : 	const uint32_t pd_lo = a * b;
-
-	mov	r8d, edx
-
-; 31   : 	const uint32_t pd_hi = a & b & 0x10000u;
-
-	and	edx, DWORD PTR [rax+r11-4]
-	imul	r8d, DWORD PTR [rax+r11-4]
-	and	edx, 65536				; 00010000H
-
-; 32   : 	const uint32_t srem = (pd_lo & 0xffffu) - pd_hi
-
-	movzx	r9d, r8w
-	sub	r9d, edx
-	shr	r8d, 16
-	sub	r9d, r8d
-
-; 33   : 		- ((pd_lo & 0xffff0000u) >> 16);
-; 34   : 	const uint32_t rem = srem
-
-	mov	ecx, r9d
-	mov	edx, r9d
-	shr	ecx, 15
-	and	ecx, 65536				; 00010000H
-	shr	edx, 31
-	add	ecx, r9d
-	add	edx, ecx
-
-; 100  : #if 1
-; 101  : 		IterRes[i]
-; 102  : 			= mul_mod_pf4_shr(IterA[i], IterB[i]);
-
-	mov	DWORD PTR [rax+rbx-4], edx
-	sub	r10, 1
-	jne	SHORT $LL10@vec_mod_pf
-
-; 103  : #else
-; 104  : 		IterRes[i] = (IterA[i] * IterB[i]) % 0x10001u;
-; 105  : #endif
-; 106  : 	}
-; 107  : }
-
-	add	rsp, 48					; 00000030H
-	pop	rbx
+	lea	r11, QWORD PTR [rsp+192]
+	vmovaps	xmm6, XMMWORD PTR [r11-16]
+	vmovaps	xmm7, XMMWORD PTR [r11-32]
+	vmovaps	xmm8, XMMWORD PTR [r11-48]
+	vmovaps	xmm9, XMMWORD PTR [r11-64]
+	mov	rsp, r11
+	pop	rbp
 	ret	0
 vec_mod_pf4 ENDP
 _TEXT	ENDS
@@ -1336,13 +1268,13 @@ List$ = 16
 Nonce$dead$ = 24
 fill_list_rand PROC					; COMDAT
 
-; 109  : 	const int Nonce) {
+; 112  : 	uint32_t *restrict List, const int Nonce) {
 
 $LN20:
 	mov	QWORD PTR [rsp+8], rbx
 	mov	rbx, rdx
 
-; 110  : 	for(int i = 0; i < Num; i++) {
+; 113  : 	for(int i = 0; i < Num; i++) {
 
 	xor	r11d, r11d
 	npad	5
@@ -1354,7 +1286,7 @@ $LL4@fill_list_:
 	xor	eax, eax
 ; File C:\Users\user\Desktop\primitive-root\pf4.c
 
-; 111  : 		List[i] = (int)speck64u96(
+; 114  : 		List[i] = (int)speck64u96(
 
 	lea	r9d, DWORD PTR [r11+999999]
 ; File C:\Users\user\Desktop\primitive-root\speck.h
@@ -1364,7 +1296,7 @@ $LL4@fill_list_:
 	xor	edx, edx
 ; File C:\Users\user\Desktop\primitive-root\pf4.c
 
-; 111  : 		List[i] = (int)speck64u96(
+; 114  : 		List[i] = (int)speck64u96(
 
 	mov	r10d, 223344				; 00036870H
 	mov	r8d, r11d
@@ -1406,7 +1338,7 @@ $LL7@fill_list_:
 	jl	SHORT $LL7@fill_list_
 ; File C:\Users\user\Desktop\primitive-root\pf4.c
 
-; 110  : 	for(int i = 0; i < Num; i++) {
+; 113  : 	for(int i = 0; i < Num; i++) {
 
 	mov	DWORD PTR [rbx], ecx
 	inc	r11d
@@ -1414,9 +1346,9 @@ $LL7@fill_list_:
 	cmp	r11d, 3000000				; 002dc6c0H
 	jl	SHORT $LL4@fill_list_
 
-; 112  : 			100, i, Nonce, i + 999999);
-; 113  : 	}
-; 114  : }
+; 115  : 			100, i, Nonce, i + 999999);
+; 116  : 	}
+; 117  : }
 
 	mov	rbx, QWORD PTR [rsp+8]
 	ret	0
@@ -1434,24 +1366,22 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 main	PROC						; COMDAT
 
-; 115  : int main(void) {
+; 118  : int main(void) {
 
 $LN29:
 	mov	QWORD PTR [rsp+8], rbx
-	mov	QWORD PTR [rsp+16], rbp
-	mov	QWORD PTR [rsp+24], rsi
 	push	rdi
 	sub	rsp, 32					; 00000020H
 
-; 116  : 	const int VecLen = 1000000;
-; 117  : 	int32_t *Vecs
+; 119  : 	const int VecLen = 1000000;
+; 120  : 	uint32_t *Vecs
 
 	mov	ecx, 12000000				; 00b71b00H
 	call	QWORD PTR __imp_malloc
 	mov	rdi, rax
 	mov	rbx, rax
 	xor	r11d, r11d
-	npad	8
+	npad	2
 $LL9@main:
 ; File C:\Users\user\Desktop\primitive-root\speck.h
 
@@ -1460,7 +1390,7 @@ $LL9@main:
 	xor	ecx, ecx
 ; File C:\Users\user\Desktop\primitive-root\pf4.c
 
-; 111  : 		List[i] = (int)speck64u96(
+; 114  : 		List[i] = (int)speck64u96(
 
 	lea	r9d, DWORD PTR [r11+999999]
 ; File C:\Users\user\Desktop\primitive-root\speck.h
@@ -1470,7 +1400,7 @@ $LL9@main:
 	xor	eax, eax
 ; File C:\Users\user\Desktop\primitive-root\pf4.c
 
-; 111  : 		List[i] = (int)speck64u96(
+; 114  : 		List[i] = (int)speck64u96(
 
 	mov	r10d, 223344				; 00036870H
 	mov	r8d, r11d
@@ -1512,7 +1442,7 @@ $LL12@main:
 	jl	SHORT $LL12@main
 ; File C:\Users\user\Desktop\primitive-root\pf4.c
 
-; 110  : 	for(int i = 0; i < Num; i++) {
+; 113  : 	for(int i = 0; i < Num; i++) {
 
 	mov	DWORD PTR [rbx], edx
 	inc	r11d
@@ -1520,32 +1450,31 @@ $LL12@main:
 	cmp	r11d, 3000000				; 002dc6c0H
 	jl	SHORT $LL9@main
 
-; 118  : 		= malloc(VecLen * 3 * sizeof Vecs[0]);
-; 119  : 	fill_list_rand(VecLen * 3, Vecs, 223344);
-; 120  : 	for(int i = 0; i < 1000; i++) {
+; 121  : 		= malloc(VecLen * 3 * sizeof Vecs[0]);
+; 122  : 	fill_list_rand(VecLen * 3, Vecs, 223344);
+; 123  : 	for(int i = 0; i < 1000; i++) {
 
-	mov	ebx, 1000				; 000003e8H
-	npad	4
+	lea	r8, QWORD PTR [rdi+4000000]
+	mov	r10d, 1000				; 000003e8H
+	npad	12
 $LL4@main:
 
-; 121  : 		vec_mod_pf4(VecLen, Vecs, Vecs + VecLen,
+; 124  : 		vec_mod_pf4(VecLen, Vecs,
 
 	lea	r9, QWORD PTR [rdi+8000000]
 	mov	rdx, rdi
-	lea	r8, QWORD PTR [rdi+4000000]
 	call	vec_mod_pf4
-	sub	rbx, 1
+	sub	r10, 1
 	jne	SHORT $LL4@main
 
-; 122  : 			Vecs + VecLen * 2);
-; 123  : 	}
-; 124  : 	return 0;
-; 125  : }
+; 125  : 			(uint16_t *)(Vecs + VecLen),
+; 126  : 			(uint16_t *)(Vecs + VecLen * 2));
+; 127  : 	}
+; 128  : 	return 0;
+; 129  : }
 
 	mov	rbx, QWORD PTR [rsp+48]
 	xor	eax, eax
-	mov	rbp, QWORD PTR [rsp+56]
-	mov	rsi, QWORD PTR [rsp+64]
 	add	rsp, 32					; 00000020H
 	pop	rdi
 	ret	0

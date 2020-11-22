@@ -24,7 +24,7 @@ inline int32_t mod_p3013(const uint64_t v) {
 		= vi3 + (vi3 > v2 ? 0x40002001ull : 0);
 	return (int32_t)(v3 & 0xffffffffull);
 }
-inline int32_t mod_p3013_2(const uint64_t v) {
+inline int32_t mul_mod_p3013(const uint64_t v) {
 	const uint64_t c2 = 0x1ffffffffull/0x10001ull+1;
 	const uint64_t c = UINT64_MAX / 0x40002001ull + 1;
 	const uint64_t m = (c * v * 0x40002001ull) >> 32;

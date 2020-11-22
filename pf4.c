@@ -94,32 +94,35 @@ int test_mod_pf4(const int Num, const int Nonce) {
 	return test_mod_pf4(Num - 1, Nonce + 100001);
 }
 void vec_mod_pf4(const int Num,
-	int32_t *restrict IterRes, int32_t *restrict IterA,
-	int32_t *restrict IterB) {
+	uint32_t *restrict IterRes,
+	uint16_t *restrict IterA,
+	uint16_t *restrict IterB) {
 	for(int i = 0; i < Num; i++) {
 #if 1
 		IterRes[i]
-			= mul_mod_pf4_shr(IterA[i], IterB[i]);
+			= add_mod_pf4_shr(IterA[i], IterB[i]);
 #else
-		IterRes[i] = (IterA[i] * IterB[i]) % 0x10001u;
+		IterRes[i]
+			= ((uint32_t)IterA[i] + (uint32_t)IterB[i])
+			% 0x10001u;
 #endif
 	}
 }
-void fill_list_rand(const int Num, int *restrict List,
-	const int Nonce) {
+void fill_list_rand(const int Num,
+	uint32_t *restrict List, const int Nonce) {
 	for(int i = 0; i < Num; i++) {
 		List[i] = (int)speck64u96(
 			100, i, Nonce, i + 999999);
 	}
 }
+int print_unit_roots(
+	const int omega, const int order) {
+	if(order == 0) return 0;
+	printf("w^%i\t= %lli\n", order,
+		pow_Zp_ring(0x10001u, omega, order));
+	return print_unit_roots(omega, order / 2);
+}
 int main(void) {
-	const int VecLen = 1000000;
-	int32_t *Vecs
-		= malloc(VecLen * 3 * sizeof Vecs[0]);
-	fill_list_rand(VecLen * 3, Vecs, 223344);
-	for(int i = 0; i < 1000; i++) {
-		vec_mod_pf4(VecLen, Vecs, Vecs + VecLen,
-			Vecs + VecLen * 2);
-	}
+	print_unit_roots(10, 0x10001u - 1);
 	return 0;
 }

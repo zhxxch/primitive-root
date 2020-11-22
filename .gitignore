@@ -1,4 +1,5 @@
 *.pdb
+*.asm
 
 # Object files
 *.o
