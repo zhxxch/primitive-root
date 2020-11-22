@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "speck.h"
 const int p3013_factors[] = {2, 3, 43691};
 const int p3013_orders[] = {0x40002000 / 2,
@@ -8,20 +9,26 @@ const int p3013_orders[] = {0x40002000 / 2,
 inline int32_t mod_p3013(const uint64_t v) {
 	const uint64_t f1 = v & (0x3ffull << 51);
 	const uint64_t m1 = f1 + (f1 >> 17) + (f1 >> 30);
-	const int64_t vi1 = v - m1;
+	const uint64_t vi1 = v - m1;
 	const uint64_t v1
-		= vi1 + (vi1 < 0 ? (0x40002001ull << 20) : 0);
+		= vi1 + (vi1 > v ? (0x40002001ull << 20) : 0);
 	const uint64_t f2 = v1 & (0x3ffull << 41);
 	const uint64_t m2 = f2 + (f2 >> 17) + (f2 >> 30);
-	const int64_t vi2 = v1 - m2;
+	const uint64_t vi2 = v1 - m2;
 	const uint64_t v2
-		= vi2 + (vi2 < 0 ? (0x40002001ull << 10) : 0);
+		= vi2 + (vi2 > v1 ? (0x40002001ull << 10) : 0);
 	const uint64_t f3 = v2 & (0x7ffull << 30);
 	const uint64_t m3 = f3 + (f3 >> 17) + (f3 >> 30);
-	const int64_t vi4 = v2 - m3;
-	const uint64_t v4
-		= vi4 + (vi4 < 0 ? 0x40002001ull : 0);
-	return (int32_t)(v4 & 0xffffffffull);
+	const uint64_t vi3 = v2 - m3;
+	const uint64_t v3
+		= vi3 + (vi3 > v2 ? 0x40002001ull : 0);
+	return (int32_t)(v3 & 0xffffffffull);
+}
+inline int32_t mod_p3013_2(const uint64_t v) {
+	const uint64_t c2 = 0x1ffffffffull/0x10001ull+1;
+	const uint64_t c = UINT64_MAX / 0x40002001ull + 1;
+	const uint64_t m = (c * v * 0x40002001ull) >> 32;
+	return (int32_t)m;
 }
 int test_modp3013(const int Num, const int Nonce) {
 	if(Num <= 0) return 0;
@@ -32,10 +39,16 @@ int test_modp3013(const int Num, const int Nonce) {
 		= speck64u96(Nonce + 2, Nonce + 16, 111, Nonce)
 		% 0x40002001;
 	const int32_t ans = (a * b) % 0x40002001;
-	const int32_t res = mod_p3013(a * b);
-	printf("%s:\t0x%.8x, 0x%.8x (ans, res)\n",
-		(ans == res ? "Eq" : "Neq"), ans, res);
+	const int32_t res = mod_p3013_2(a * b);
+	if(ans != res)
+		printf("%s:\t0x%.8x, 0x%.8x (ans, res)\n",
+			(ans == res ? "Eq" : "Neq"), ans, res);
 	return test_modp3013(Num - 1, Nonce + 100001);
+}
+void vec_modp3013(const int Num, int *restrict Iter) {
+	for(int i = 0; i < Num; i++) {
+		Iter[i] = mod_p3013(Iter[i]);
+	}
 }
 uint64_t pow_Zp_ring(const uint64_t p,
 	const uint64_t base, const uint64_t exponent) {
@@ -63,4 +76,17 @@ int search_p3013_gens(const int Num) {
 	}
 	return 0;
 }
-int main(void) { return search_p3013_gens(100); }
+void fill_list_rand(
+	const int Num, int *restrict List) {
+	for(int i = 0; i < Num; i++) {
+		List[i] = (int)speck64u96(100, 200, i, i + 2);
+	}
+}
+int main(void) {
+	const int Num = 10000;
+	int *List = malloc(Num * sizeof List[0]);
+	fill_list_rand(Num, List);
+	vec_modp3013(Num, List);
+	test_modp3013(10000, 100);
+	return search_p3013_gens(10);
+}
