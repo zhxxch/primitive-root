@@ -12,6 +12,8 @@
 #include <iterator>
 #include <stdint.h>
 namespace fft7071 {
+using std::advance;
+using std::distance;
 const double pi = 3.141592653589793238462643383;
 /*
 0x1.921fb54442d18p+1<pi<0x1.921fb54442d19p+1
@@ -173,133 +175,246 @@ inline double cr_cospi_hq(const double frac) {
 	const double im0 = im1 + 0x1p-64 * (double)ans[2];
 	return im0;
 }
-
-auto exp_c_unit_root(
-	const double phase, const double max_freq) {
-	return [phase, max_freq](
-			   const std::complex<double> k)
-			   -> std::complex<double> {
-		using namespace std::complex_literals;
-		const double theta = k.real() / max_freq;
-		if(theta == 0) return 1;
-		if(theta == 3. / 8)
-			return (
-				-root7071 + phase * root7071 * 1.0i);
-		if(theta == 2. / 8) return (phase * 1.0i);
-		if(theta == 1. / 8)
-			return (
-				root7071 + phase * root7071 * 1.0i);
-		const double theta2
-			= theta > 2. / 8 ? 0.5 - theta : theta;
-		const double theta4
-			= theta2 > 1. / 8 ? 0.25 - theta2 : theta2;
-		const double s = cr_sinpi_hq(theta4 * 8);
-		const double c = cr_cospi_hq(theta4 * 8);
-		if(theta > 3. / 8)
-			return (-c + phase * s * 1.0i);
-		if(theta > 2. / 8)
-			return (-s + phase * c * 1.0i);
-		if(theta > 1. / 8)
-			return (s + phase * c * 1.0i);
-		return (c + phase * s * 1.0i);
-	};
+inline std::complex<double> c_unit_root_exp(
+	const double phase, const double max_freq,
+	const double k) {
+	using namespace std::complex_literals;
+	const double theta = k / max_freq;
+	if(theta == 0) return 1;
+	if(theta == 3. / 8)
+		return (-root7071 + phase * root7071 * 1.0i);
+	if(theta == 2. / 8) return (phase * 1.0i);
+	if(theta == 1. / 8)
+		return (root7071 + phase * root7071 * 1.0i);
+	const double theta2
+		= theta > 2. / 8 ? 0.5 - theta : theta;
+	const double theta4
+		= theta2 > 1. / 8 ? 0.25 - theta2 : theta2;
+	const double s = cr_sinpi_hq(theta4 * 8);
+	const double c = cr_cospi_hq(theta4 * 8);
+	if(theta > 3. / 8) return (-c + phase * s * 1.0i);
+	if(theta > 2. / 8) return (-s + phase * c * 1.0i);
+	if(theta > 1. / 8) return (s + phase * c * 1.0i);
+	return (c + phase * s * 1.0i);
 }
-template<typename iter_t, typename ts_vec_it_t>
+template<typename T> class complex_unit_root_iter {
+  public:
+	typename T::value_type MaxFreq;
+	typename T::value_type freq;
+	typename T::value_type Phase;
+	using iterator_category
+		= std::forward_iterator_tag;
+	using value_type = typename T;
+	using difference_type = int;
+	using pointer = typename T;
+	using reference = typename T;
+	complex_unit_root_iter(
+		const typename T::value_type max_freq,
+		const typename T::value_type phase) :
+		MaxFreq(max_freq),
+		freq(0), Phase(phase){};
+	complex_unit_root_iter() :
+		MaxFreq(1), freq(0), Phase(1){};
+	T operator*() const;
+	complex_unit_root_iter<T> operator++(int) {
+		complex_unit_root_iter<T> R = *this;
+		freq += 1;
+		return R;
+	};
+	complex_unit_root_iter<T> &operator++() {
+		freq += 1;
+		return *this;
+	};
+
+	bool operator==(
+		complex_unit_root_iter<T> const &other) const {
+		return MaxFreq == other.MaxFreq && freq
+			= other.freq && Phase == other.Phase;
+	};
+	bool operator!=(
+		complex_unit_root_iter<T> const &other) const {
+		return !(*this == other);
+	};
+};
+template<typename T>
+T complex_unit_root_iter<T>::operator*() const {
+	return exp(
+		Phase * 2 * freq * pi * T(0, 1) / MaxFreq);
+}
+template<>
+std::complex<double> complex_unit_root_iter<
+	std::complex<double>>::operator*() const {
+	return c_unit_root_exp(Phase, MaxFreq, freq);
+}
+
+template<typename T>
+void advance(
+	complex_unit_root_iter<T> &iter, const size_t n) {
+	iter.freq += n;
+}
+
+template<typename I> class strided_iterator {
+
+  public:
+	I BaseIter;
+	size_t LDA;
+	using iterator_category
+		= std::forward_iterator_tag;
+	using value_type = typename I::value_type;
+	using difference_type =
+		typename I::difference_type;
+	using pointer = typename I::pointer;
+	using reference = typename I::reference;
+	strided_iterator(
+		const I iter, const size_t stride) :
+		BaseIter(iter),
+		LDA(stride){};
+	strided_iterator() : BaseIter((void *)0), LDA(0){};
+	value_type &operator*() const {
+		return *BaseIter;
+	};
+	strided_iterator<I> operator++(int) {
+		strided_iterator<I> R = *this;
+		advance(BaseIter, LDA);
+		return R;
+	};
+	strided_iterator<I> &operator++() {
+		advance(BaseIter, LDA);
+		return *this;
+	};
+
+	bool operator==(
+		strided_iterator<I> const &other) const {
+		return BaseIter == other.BaseIter
+			&& LDA == other.LDA;
+	};
+	bool operator!=(
+		strided_iterator<I> const &other) const {
+		return !(*this == other);
+	};
+};
+template<typename I>
+void advance(
+	strided_iterator<I> &iter, const size_t n) {
+	advance(iter.BaseIter, n * iter.LDA);
+}
+template<typename I>
+typename I::difference_type distance(
+	strided_iterator<I> i, strided_iterator<I> s) {
+	return (s.BaseIter - i.BaseIter) / i.LDA;
+}
 #if __cplusplus > 201703L
-requires std::random_access_iterator<iter_t> &&
-	std::random_access_iterator<ts_vec_it_t>
+template<typename I_x, typename S, typename I_w>
+concept fft_in_situ_iters
+	= std::sentinel_for<S, I_x> &&
+		std::indirectly_movable<I_x, I_x> &&
+			std::incrementable<I_x> &&
+				std::forward_iterator<I_w> &&requires(
+					typename I_x::value_type x,
+					typename I_w::value_type w) {
+	x + x *w;
+	x - x *w;
+};
 #endif
-	inline void fft_in_situ(iter_t Vec,
-		ts_vec_it_t IterAt1, ts_vec_it_t IterAtNeg1) {
-	using arith_t = typename iter_t::value_type;
-	const size_t VecLen
-		= 2 * std::distance(IterAt1, IterAtNeg1);
+template<typename x_iter_t, typename x_sentinel_t,
+	typename w_iter_t>
+#if __cplusplus > 201703L
+requires fft_in_situ_iters<x_iter_t, x_sentinel_t,
+	w_iter_t>
+#endif
+	inline void fft_in_situ(
+		x_iter_t X_0, x_sentinel_t X_N, w_iter_t W_0) {
+	using arith_t = typename x_iter_t::value_type;
+	const size_t Length = distance(X_0, X_N);
 	size_t sub_ft_size = 1;
-	size_t num_sub_ft = VecLen / sub_ft_size;
+	size_t num_sub_ft = Length / sub_ft_size;
 	size_t num_sub_ft_pair = num_sub_ft / 2;
-	for(size_t sub_ft_pos = 0;
-		sub_ft_pos < num_sub_ft_pair;
-		sub_ft_pos += 2) {
-		const arith_t parit00 = Vec[sub_ft_pos];
-		const arith_t parit01
-			= Vec[num_sub_ft_pair + sub_ft_pos];
-		const arith_t parit10 = Vec[sub_ft_pos + 1];
-		const arith_t parit11
-			= Vec[num_sub_ft_pair + sub_ft_pos + 1];
-		Vec[sub_ft_pos] = parit00 + parit01;
-		Vec[sub_ft_pos + 1] = parit00 - parit01;
-		Vec[num_sub_ft_pair + sub_ft_pos]
-			= parit10 + parit11;
-		Vec[num_sub_ft_pair + sub_ft_pos + 1]
-			= parit10 - parit11;
+	x_iter_t parit00_it_2 = X_0;
+	x_iter_t parit01_it_2 = X_0;
+	++parit01_it_2;
+	x_iter_t parit10_it_2 = X_0;
+	advance(parit10_it_2, num_sub_ft_pair);
+	x_iter_t parit11_it_2 = parit10_it_2;
+	++parit11_it_2;
+	while(parit10_it_2 != X_N) {
+		const arith_t parit00 = *parit00_it_2;
+		const arith_t parit01 = *parit10_it_2;
+		const arith_t parit10 = *parit01_it_2;
+		const arith_t parit11 = *parit11_it_2;
+		*parit00_it_2 = parit00 + parit01;
+		*parit01_it_2 = parit00 - parit01;
+		*parit10_it_2 = parit10 + parit11;
+		*parit11_it_2 = parit10 - parit11;
+		advance(parit00_it_2, 2);
+		advance(parit01_it_2, 2);
+		advance(parit10_it_2, 2);
+		advance(parit11_it_2, 2);
 	}
 	for(sub_ft_size *= 2, num_sub_ft /= 2,
 		num_sub_ft_pair /= 2;
 		sub_ft_size < num_sub_ft_pair;
 		sub_ft_size *= 2, num_sub_ft /= 2,
 		num_sub_ft_pair /= 2) {
-		for(size_t perm_pos = 0; perm_pos < VecLen;
-			perm_pos += 2 * num_sub_ft_pair) {
-			for(size_t sub_ft_pos = perm_pos;
-				sub_ft_pos
-				< perm_pos + num_sub_ft_pair;
-				sub_ft_pos += 2 * sub_ft_size) {
-				for(size_t i = sub_ft_pos, nth_exp = 0;
-					i < sub_ft_pos + sub_ft_size;
-					i++, nth_exp += num_sub_ft_pair) {
-					const typename ts_vec_it_t::
-						value_type W
-						= IterAt1[nth_exp];
-					const arith_t parit00 = Vec[i];
+		for(x_iter_t couple_group_it = X_0;
+			couple_group_it != X_N;
+			advance(couple_group_it,
+				2 * num_sub_ft_pair)) {
+			x_iter_t sub_ft_it = couple_group_it;
+			x_iter_t sub_ft_s = sub_ft_it;
+			advance(sub_ft_s, 2 * sub_ft_size);
+			for(; sub_ft_it != sub_ft_s;
+				advance(sub_ft_it, 2 * sub_ft_size)) {
+				x_iter_t parit00_it = sub_ft_it;
+				x_iter_t parit01_it = parit00_it;
+				advance(parit01_it, sub_ft_size);
+				x_iter_t parit10_it = sub_ft_it;
+				advance(parit10_it, num_sub_ft_pair);
+				x_iter_t parit11_it = parit10_it;
+				advance(parit11_it, sub_ft_size);
+				for(w_iter_t nth_pow
+					= W_0;
+					parit01_it != sub_ft_s;
+					advance(nth_pow, num_sub_ft_pair),
+					++parit00_it, ++parit01_it,
+					++parit10_it, ++parit11_it) {
+					typename w_iter_t::value_type W
+						= *nth_pow;
+					const arith_t parit00
+						= *parit00_it;
 					const arith_t parit01
-						= Vec[num_sub_ft_pair + i] * W;
+						= *parit10_it * W;
 					const arith_t parit10
-						= Vec[i + sub_ft_size];
+						= *parit01_it;
 					const arith_t parit11
-						= Vec[num_sub_ft_pair + i
-							  + sub_ft_size]
-						* W;
-					Vec[i] = parit00 + parit01;
-					Vec[i + sub_ft_size]
-						= parit00 - parit01;
-					Vec[num_sub_ft_pair + i]
-						= parit10 + parit11;
-					Vec[num_sub_ft_pair + i
-						+ sub_ft_size]
-						= parit10 - parit11;
+						= *parit11_it * W;
+					*parit00_it = parit00 + parit01;
+					*parit01_it = parit00 - parit01;
+					*parit10_it = parit10 + parit11;
+					*parit11_it = parit10 - parit11;
 				}
 			}
 		}
 	}
-	for(; sub_ft_size < VecLen; sub_ft_size *= 2,
+	for(; sub_ft_size < Length; sub_ft_size *= 2,
 		num_sub_ft /= 2, num_sub_ft_pair /= 2) {
-		for(size_t sub_ft_pos = 0; sub_ft_pos < VecLen;
-			sub_ft_pos += 2 * sub_ft_size) {
-			for(size_t i = sub_ft_pos, nth_pow = 0;
-				i < sub_ft_pos + sub_ft_size;
-				i++, nth_pow += num_sub_ft_pair) {
-				const arith_t parit1 = IterAt1[nth_pow]
-					* Vec[i + sub_ft_size];
-				const arith_t parit0 = Vec[i];
-				Vec[i] = parit0 + parit1;
-				Vec[i + sub_ft_size] = parit0 - parit1;
+		for(x_iter_t sub_ft_it = X_0; sub_ft_it != X_N;
+			advance(sub_ft_it, 2 * sub_ft_size)) {
+			x_iter_t parit0_it = sub_ft_it,
+					 parit1_it = sub_ft_it;
+			advance(parit1_it, sub_ft_size);
+			const x_iter_t parit0_s = parit1_it;
+			for(w_iter_t nth_pow
+				= W_0;
+				parit0_it != parit0_s;
+				++parit0_it, ++parit1_it,
+				advance(nth_pow, num_sub_ft_pair)) {
+				const arith_t parit0 = *parit0_it;
+				const arith_t parit1
+					= (*parit1_it) * (*nth_pow);
+				*parit0_it = parit0 + parit1;
+				*parit1_it = parit0 - parit1;
 			}
 		}
 	}
-}
-template<typename input_iter_t, typename A_t,
-	typename ts_vec_it_t,
-	typename vec_t
-	= std::vector<ts_vec_it_t::value_type>>
-inline vec_t fft(input_iter_t Series, A_t Scale,
-	ts_vec_it_t IterAt1, ts_vec_it_t IterAtNeg1) {
-	const size_t VecLen
-		= 2 * std::distance(IterAt1, IterAtNeg1);
-	vec_t FtVec(VecLen);
-	std::transform(Series, Series + VecLen,
-		FtVec.begin(),
-		[Scale](auto x) { return Scale * x; });
-	fft_in_situ(FtVec.begin(), IterAt1, IterAtNeg1);
-	return FtVec;
 }
 } // namespace fft7071
