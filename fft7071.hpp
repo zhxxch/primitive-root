@@ -2,13 +2,12 @@
 /***__ |  \   /   __|
 ****  /     /    |
 ****___|  _/ _\ \___|
-	fft7071.hpp (2020)
+	fft7071.hpp (2020) copyright, github.com/zhxxch
 */
 #ifndef __cplusplus
 #error "__cplusplus not defined"
 #endif
 #include <complex>
-#include <vector>
 #include <iterator>
 #include <stdint.h>
 namespace fft7071 {
@@ -238,8 +237,9 @@ template<typename T> class complex_unit_root_iter {
 };
 template<typename T>
 T complex_unit_root_iter<T>::operator*() const {
-	return exp(
-		Phase * 2 * freq * pi * T(0, 1) / MaxFreq);
+	const typename T::value_type theta
+		= Phase * 2 * freq * pi / MaxFreq;
+	return T(cos(theta), sin(theta));
 }
 template<>
 std::complex<double> complex_unit_root_iter<
@@ -361,19 +361,20 @@ requires fft_in_situ_iters<x_iter_t, x_sentinel_t,
 				2 * num_sub_ft_pair)) {
 			x_iter_t sub_ft_it = couple_group_it;
 			x_iter_t sub_ft_s = sub_ft_it;
-			advance(sub_ft_s, 2 * sub_ft_size);
+			advance(sub_ft_s, num_sub_ft_pair);
 			for(; sub_ft_it != sub_ft_s;
 				advance(sub_ft_it, 2 * sub_ft_size)) {
 				x_iter_t parit00_it = sub_ft_it;
 				x_iter_t parit01_it = parit00_it;
 				advance(parit01_it, sub_ft_size);
+				const x_iter_t it_s = parit01_it;
 				x_iter_t parit10_it = sub_ft_it;
 				advance(parit10_it, num_sub_ft_pair);
 				x_iter_t parit11_it = parit10_it;
 				advance(parit11_it, sub_ft_size);
 				for(w_iter_t nth_pow
 					= W_0;
-					parit01_it != sub_ft_s;
+					parit00_it != it_s;
 					advance(nth_pow, num_sub_ft_pair),
 					++parit00_it, ++parit01_it,
 					++parit10_it, ++parit11_it) {
