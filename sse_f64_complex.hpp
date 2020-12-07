@@ -1,5 +1,5 @@
 /*
-fft7071.hpp (2020) copyright, github.com/zhxxch
+sse_f64_complex.hpp (2020) copyright, github.com/zhxxch
 */
 #pragma once
 #include <array>

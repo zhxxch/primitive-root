@@ -360,14 +360,14 @@ requires fft_in_situ_iters<x_iter_t, x_sentinel_t,
 			advance(couple_group_it,
 				2 * num_sub_ft_pair)) {
 			x_iter_t sub_ft_it = couple_group_it;
-			x_iter_t sub_ft_s = sub_ft_it;
+			x_sentinel_t sub_ft_s = sub_ft_it;
 			advance(sub_ft_s, num_sub_ft_pair);
 			for(; sub_ft_it != sub_ft_s;
 				advance(sub_ft_it, 2 * sub_ft_size)) {
 				x_iter_t parit00_it = sub_ft_it;
 				x_iter_t parit01_it = parit00_it;
 				advance(parit01_it, sub_ft_size);
-				const x_iter_t it_s = parit01_it;
+				const x_sentinel_t it_s = parit01_it;
 				x_iter_t parit10_it = sub_ft_it;
 				advance(parit10_it, num_sub_ft_pair);
 				x_iter_t parit11_it = parit10_it;
@@ -403,7 +403,7 @@ requires fft_in_situ_iters<x_iter_t, x_sentinel_t,
 			x_iter_t parit0_it = sub_ft_it,
 					 parit1_it = sub_ft_it;
 			advance(parit1_it, sub_ft_size);
-			const x_iter_t parit0_s = parit1_it;
+			const x_sentinel_t parit0_s = parit1_it;
 			for(w_iter_t nth_pow
 				= W_0;
 				parit0_it != parit0_s;
