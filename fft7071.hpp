@@ -9,7 +9,8 @@
 #endif
 #include <complex>
 #include <iterator>
-#include <stdint.h>
+#include <cmath>
+#include <cstdint>
 namespace fft7071 {
 using std::advance;
 using std::distance;
@@ -175,26 +176,31 @@ inline double cr_cospi_hq(const double frac) {
 	return im0;
 }
 inline std::complex<double> c_unit_root_exp(
-	const double phase, const double max_freq,
+	const double phase, const double N,
 	const double k) {
 	using namespace std::complex_literals;
-	const double theta = k / max_freq;
+	const double theta_l = k / N;
+	const double theta = theta_l - floor(theta_l);
 	if(theta == 0) return 1;
-	if(theta == 3. / 8)
-		return (-root7071 + phase * root7071 * 1.0i);
-	if(theta == 2. / 8) return (phase * 1.0i);
-	if(theta == 1. / 8)
-		return (root7071 + phase * root7071 * 1.0i);
+	if(theta == 1. / 2) return -1;
 	const double theta2
-		= theta > 2. / 8 ? 0.5 - theta : theta;
+		= theta > 1. / 2 ? 1 - theta : theta;
+	const double p = theta > 1. / 2 ? -phase : phase;
+	if(theta2 == 3. / 8)
+		return (-root7071 + p * root7071 * 1.0i);
+	if(theta2 == 2. / 8) return (p * 1.0i);
+	if(theta2 == 1. / 8)
+		return (root7071 + p * root7071 * 1.0i);
 	const double theta4
-		= theta2 > 1. / 8 ? 0.25 - theta2 : theta2;
-	const double s = cr_sinpi_hq(theta4 * 8);
-	const double c = cr_cospi_hq(theta4 * 8);
-	if(theta > 3. / 8) return (-c + phase * s * 1.0i);
-	if(theta > 2. / 8) return (-s + phase * c * 1.0i);
-	if(theta > 1. / 8) return (s + phase * c * 1.0i);
-	return (c + phase * s * 1.0i);
+		= theta2 > 2. / 8 ? 0.5 - theta2 : theta2;
+	const double theta8
+		= theta4 > 1. / 8 ? 0.25 - theta4 : theta4;
+	const double s = cr_sinpi_hq(theta8 * 8);
+	const double c = cr_cospi_hq(theta8 * 8);
+	if(theta2 > 3. / 8) return (-c + p * s * 1.0i);
+	if(theta2 > 2. / 8) return (-s + p * c * 1.0i);
+	if(theta2 > 1. / 8) return (s + p * c * 1.0i);
+	return (c + p * s * 1.0i);
 }
 template<typename T> class complex_unit_root_iter {
   public:
@@ -416,6 +422,51 @@ requires fft_in_situ_iters<x_iter_t, x_sentinel_t,
 				*parit1_it = parit0 - parit1;
 			}
 		}
+	}
+}
+template<typename w_iter_t, typename chirp_iter_t>
+void chirp_z_modulator(w_iter_t W_2czN_q4_0,
+	const size_t CZ_N, chirp_iter_t M_0) {
+	for(size_t i = 0; i < CZ_N; i++) {
+		const size_t k = (i * i) % (2 * CZ_N);
+		w_iter_t w = W_2czN_q4_0;
+		advance(w, k);
+		*M_0++ = *w;
+	}
+}
+template<typename w_iter_t, typename chirp_iter_t>
+void chirp_z_filter(w_iter_t W_2czN_q1_0,
+	const size_t CZ_N, const size_t FFT_N,
+	chirp_iter_t F_0) {
+	for(size_t i = 0; i < CZ_N; i++) {
+		const size_t k = (i * i) % (2 * CZ_N);
+		w_iter_t w = W_2czN_q1_0;
+		advance(w, k);
+		F_0[i] = *w;
+	}
+	for(size_t i = 1; i < CZ_N; i++) {
+		const size_t k = (i * i) % (2 * CZ_N);
+		w_iter_t w = W_2czN_q1_0;
+		advance(w, k);
+		F_0[FFT_N - i] = *w;
+	}
+}
+template<typename x_iter_t, typename cz_w_it_t,
+	typename fft_w_it_t>
+void chirp_z(x_iter_t X_0, const size_t FFT_N,
+	cz_w_it_t cz_modulator, cz_w_it_t cz_filter,
+	fft_w_it_t Wp4_0, fft_w_it_t Wp1_0) {
+	for(size_t i = 0; i < FFT_N / 2; i++) {
+		X_0[i] = X_0[i] * cz_modulator[i];
+	}
+	fft_in_situ(X_0, X_0 + FFT_N, Wp4_0);
+	fft_in_situ(cz_filter, cz_filter + FFT_N, Wp4_0);
+	for(size_t i = 0; i < FFT_N; i++) {
+		X_0[i] = X_0[i] * cz_filter[i] / (double)FFT_N;
+	}
+	fft_in_situ(X_0, X_0 + FFT_N, Wp1_0);
+	for(size_t i = 0; i < FFT_N / 2; i++) {
+		X_0[i] = X_0[i] * cz_modulator[i];
 	}
 }
 } // namespace fft7071
