@@ -454,15 +454,14 @@ void chirp_z_filter(w_iter_t W_2czN_q1_0,
 template<typename x_iter_t, typename cz_w_it_t,
 	typename fft_w_it_t>
 void chirp_z(x_iter_t X_0, const size_t FFT_N,
-	cz_w_it_t cz_modulator, cz_w_it_t cz_filter,
+	cz_w_it_t cz_modulator, cz_w_it_t ft_cz_filter,
 	fft_w_it_t Wp4_0, fft_w_it_t Wp1_0) {
 	for(size_t i = 0; i < FFT_N / 2; i++) {
 		X_0[i] = X_0[i] * cz_modulator[i];
 	}
 	fft_in_situ(X_0, X_0 + FFT_N, Wp4_0);
-	fft_in_situ(cz_filter, cz_filter + FFT_N, Wp4_0);
 	for(size_t i = 0; i < FFT_N; i++) {
-		X_0[i] = X_0[i] * cz_filter[i] / (double)FFT_N;
+		X_0[i] = X_0[i] * ft_cz_filter[i];
 	}
 	fft_in_situ(X_0, X_0 + FFT_N, Wp1_0);
 	for(size_t i = 0; i < FFT_N / 2; i++) {
