@@ -266,11 +266,15 @@ template<typename I> class strided_iterator {
 	size_t LDA;
 	using iterator_category
 		= std::forward_iterator_tag;
-	using value_type = typename I::value_type;
+	using value_type =
+		typename std::iterator_traits<I>::value_type;
 	using difference_type =
-		typename I::difference_type;
-	using pointer = typename I::pointer;
-	using reference = typename I::reference;
+		typename std::iterator_traits<
+			I>::difference_type;
+	using pointer =
+		typename std::iterator_traits<I>::pointer;
+	using reference =
+		typename std::iterator_traits<I>::reference;
 	strided_iterator(
 		const I iter, const size_t stride) :
 		BaseIter(iter),
@@ -316,8 +320,10 @@ concept fft_in_situ_iters
 		std::indirectly_movable<I_x, I_x> &&
 			std::incrementable<I_x> &&
 				std::forward_iterator<I_w> &&requires(
-					typename I_x::value_type x,
-					typename I_w::value_type w) {
+					typename std::iterator_traits<
+						I_x>::value_type x,
+					typename std::iterator_traits<
+						I_w>::value_type w) {
 	x + x *w;
 	x - x *w;
 };
@@ -330,7 +336,8 @@ requires fft_in_situ_iters<x_iter_t, x_sentinel_t,
 #endif
 	inline void fft_in_situ(
 		x_iter_t X_0, x_sentinel_t X_N, w_iter_t W_0) {
-	using arith_t = typename x_iter_t::value_type;
+	using Component = typename std::iterator_traits<
+		x_iter_t>::value_type;
 	const size_t Length = distance(X_0, X_N);
 	size_t sub_ft_size = 1;
 	size_t num_sub_ft = Length / sub_ft_size;
@@ -343,10 +350,10 @@ requires fft_in_situ_iters<x_iter_t, x_sentinel_t,
 	x_iter_t parit11_it_2 = parit10_it_2;
 	++parit11_it_2;
 	while(parit10_it_2 != X_N) {
-		const arith_t parit00 = *parit00_it_2;
-		const arith_t parit01 = *parit10_it_2;
-		const arith_t parit10 = *parit01_it_2;
-		const arith_t parit11 = *parit11_it_2;
+		const Component parit00 = *parit00_it_2;
+		const Component parit01 = *parit10_it_2;
+		const Component parit10 = *parit01_it_2;
+		const Component parit11 = *parit11_it_2;
 		*parit00_it_2 = parit00 + parit01;
 		*parit01_it_2 = parit00 - parit01;
 		*parit10_it_2 = parit10 + parit11;
@@ -384,15 +391,16 @@ requires fft_in_situ_iters<x_iter_t, x_sentinel_t,
 					advance(nth_pow, num_sub_ft_pair),
 					++parit00_it, ++parit01_it,
 					++parit10_it, ++parit11_it) {
-					typename w_iter_t::value_type W
+					typename std::iterator_traits<
+						w_iter_t>::value_type W
 						= *nth_pow;
-					const arith_t parit00
+					const Component parit00
 						= *parit00_it;
-					const arith_t parit01
+					const Component parit01
 						= *parit10_it * W;
-					const arith_t parit10
+					const Component parit10
 						= *parit01_it;
-					const arith_t parit11
+					const Component parit11
 						= *parit11_it * W;
 					*parit00_it = parit00 + parit01;
 					*parit01_it = parit00 - parit01;
@@ -415,8 +423,8 @@ requires fft_in_situ_iters<x_iter_t, x_sentinel_t,
 				parit0_it != parit0_s;
 				++parit0_it, ++parit1_it,
 				advance(nth_pow, num_sub_ft_pair)) {
-				const arith_t parit0 = *parit0_it;
-				const arith_t parit1
+				const Component parit0 = *parit0_it;
+				const Component parit1
 					= (*parit1_it) * (*nth_pow);
 				*parit0_it = parit0 + parit1;
 				*parit1_it = parit0 - parit1;
@@ -424,11 +432,184 @@ requires fft_in_situ_iters<x_iter_t, x_sentinel_t,
 		}
 	}
 }
+template<typename interleave_w_it, typename sep_w_it>
+void copy_ex_w(interleave_w_it W_0,
+	interleave_w_it W_N, sep_w_it ReW0,
+	sep_w_it ImW0) {
+	const long long N = distance(W_0, W_N);
+	*ReW0++ = 0;
+	*ImW0++ = 0;
+	for(long long L = N; L > 0; L /= 2) {
+		for(long long i = 0; i < N; i += L) {
+			*ReW0++ = std::real(W_0[i]);
+			*ImW0++ = std::imag(W_0[i]);
+		}
+	}
+}
+template<typename x_iter_t, typename w_iter_t>
+void fft_in_situ_sep(x_iter_t ReX0, x_iter_t ImX0,
+	w_iter_t ReW0, w_iter_t ImW0, const int N) {
+	using Component = typename std::iterator_traits<
+		x_iter_t>::value_type;
+	long long sub_ft_size = 1;
+	long long num_sub_ft = N / sub_ft_size;
+	long long num_sub_ft_pair = num_sub_ft / 2;
+	++ReW0, ++ImW0;
+	for(long long sub_ft_pos = 0;
+		sub_ft_pos < num_sub_ft_pair;
+		sub_ft_pos += 2) {
+		const Component parit00re = ReX0[sub_ft_pos];
+		const Component parit00im = ImX0[sub_ft_pos];
+		const Component parit01re
+			= ReX0[sub_ft_pos + num_sub_ft_pair];
+		const Component parit01im
+			= ImX0[sub_ft_pos + num_sub_ft_pair];
+		const Component parit10re
+			= ReX0[sub_ft_pos + 1];
+		const Component parit10im
+			= ImX0[sub_ft_pos + 1];
+		const Component parit11re
+			= ReX0[sub_ft_pos + 1 + num_sub_ft_pair];
+		const Component parit11im
+			= ImX0[sub_ft_pos + 1 + num_sub_ft_pair];
+		ReX0[sub_ft_pos] = parit00re + parit01re;
+		ImX0[sub_ft_pos] = parit00im + parit01im;
+		ReX0[sub_ft_pos + 1] = parit00re - parit01re;
+		ImX0[sub_ft_pos + 1] = parit00im - parit01im;
+		ReX0[sub_ft_pos + num_sub_ft_pair]
+			= parit10re + parit11re;
+		ImX0[sub_ft_pos + num_sub_ft_pair]
+			= parit10im + parit11im;
+		ReX0[sub_ft_pos + 1 + num_sub_ft_pair]
+			= parit10re - parit11re;
+		ImX0[sub_ft_pos + 1 + num_sub_ft_pair]
+			= parit10im - parit11im;
+	}
+	for(ReW0 += sub_ft_size, ImW0 += sub_ft_size,
+		sub_ft_size *= 2, num_sub_ft /= 2,
+		num_sub_ft_pair /= 2;
+		sub_ft_size < num_sub_ft_pair;
+		ReW0 += sub_ft_size, ImW0 += sub_ft_size,
+		sub_ft_size *= 2, num_sub_ft /= 2,
+		num_sub_ft_pair /= 2) {
+		for(long long perm_pos = 0; perm_pos < N;
+			perm_pos += 2 * num_sub_ft_pair) {
+			for(long long sub_ft_pos = perm_pos;
+				sub_ft_pos
+				< perm_pos + num_sub_ft_pair;
+				sub_ft_pos += 2 * sub_ft_size) {
+				const x_iter_t parit00_re_it
+					= ReX0 + sub_ft_pos;
+				const x_iter_t parit00_im_it
+					= ImX0 + sub_ft_pos;
+				const x_iter_t parit01_re_it
+					= ReX0 + sub_ft_pos + sub_ft_size;
+				const x_iter_t parit01_im_it
+					= ImX0 + sub_ft_pos + sub_ft_size;
+				const x_iter_t parit10_re_it = ReX0
+					+ sub_ft_pos + num_sub_ft_pair;
+				const x_iter_t parit10_im_it = ImX0
+					+ sub_ft_pos + num_sub_ft_pair;
+				const x_iter_t parit11_re_it = ReX0
+					+ sub_ft_pos + sub_ft_size
+					+ num_sub_ft_pair;
+				const x_iter_t parit11_im_it = ImX0
+					+ sub_ft_pos + sub_ft_size
+					+ num_sub_ft_pair;
+#pragma omp simd
+				for(long long i = 0; i < sub_ft_size;
+					i++) {
+					const Component w_re = ReW0[i];
+					const Component w_im = ImW0[i];
+					const Component parit10q_re
+						= parit10_re_it[i];
+					const Component parit10q_im
+						= parit10_im_it[i];
+					const Component parit00_re
+						= parit00_re_it[i];
+					const Component parit00_im
+						= parit00_im_it[i];
+					const Component parit01_re
+						= parit10_re_it[i] * w_re
+						- parit10_im_it[i] * w_im;
+					const Component parit01_im
+						= parit10_re_it[i] * w_im
+						+ parit10_im_it[i] * w_re;
+					const Component parit10_re
+						= parit01_re_it[i];
+					const Component parit10_im
+						= parit01_im_it[i];
+					const Component parit11_re
+						= parit11_re_it[i] * w_re
+						- parit11_im_it[i] * w_im;
+					const Component parit11_im
+						= parit11_re_it[i] * w_im
+						+ parit11_im_it[i] * w_re;
+					parit00_re_it[i]
+						= parit00_re + parit01_re;
+					parit00_im_it[i]
+						= parit00_im + parit01_im;
+					parit01_re_it[i]
+						= parit00_re - parit01_re;
+					parit01_im_it[i]
+						= parit00_im - parit01_im;
+					parit10_re_it[i]
+						= parit10_re + parit11_re;
+					parit10_im_it[i]
+						= parit10_im + parit11_im;
+					parit11_re_it[i]
+						= parit10_re - parit11_re;
+					parit11_im_it[i]
+						= parit10_im - parit11_im;
+				}
+			}
+		}
+	}
+	for(; sub_ft_size < N; ReW0 += sub_ft_size,
+		ImW0 += sub_ft_size, sub_ft_size *= 2,
+		num_sub_ft /= 2, num_sub_ft_pair /= 2) {
+		for(size_t sub_ft_pos = 0; sub_ft_pos < N;
+			sub_ft_pos += 2 * sub_ft_size) {
+			const x_iter_t parit0_re_it
+				= ReX0 + sub_ft_pos;
+			const x_iter_t parit0_im_it
+				= ImX0 + sub_ft_pos;
+			const x_iter_t parit1_re_it
+				= ReX0 + sub_ft_pos + sub_ft_size;
+			const x_iter_t parit1_im_it
+				= ImX0 + sub_ft_pos + sub_ft_size;
+#pragma omp simd
+			for(long long i = 0; i < sub_ft_size;
+				i++) {
+				const Component w_re = ReW0[i];
+				const Component w_im = ImW0[i];
+				const Component parit0_re
+					= parit0_re_it[i];
+				const Component parit0_im
+					= parit0_im_it[i];
+				const Component parit1_re
+					= parit1_re_it[i] * w_re
+					- parit1_im_it[i] * w_im;
+				const Component parit1_im
+					= parit1_re_it[i] * w_im
+					+ parit1_im_it[i] * w_re;
+				parit0_re_it[i]
+					= parit0_re + parit1_re;
+				parit0_im_it[i]
+					= parit0_im + parit1_im;
+				parit1_re_it[i]
+					= parit0_re - parit1_re;
+				parit1_im_it[i]
+					= parit0_im - parit1_im;
+			}
+		}
+	}
+}
 template<typename w_iter_t, typename chirp_iter_t>
 void chirp_z_modulator(w_iter_t W_2czN_q4_0,
-	const size_t CZ_N, chirp_iter_t M_0) {
-	for(size_t i = 0; i < CZ_N; i++) {
-		const size_t k = (i * i) % (2 * CZ_N);
+	const int CZ_N, chirp_iter_t M_0) {
+	for(int i = 0; i < CZ_N; i++) {
+		const int k = (i * i) % (2 * CZ_N);
 		w_iter_t w = W_2czN_q4_0;
 		advance(w, k);
 		*M_0++ = *w;
@@ -436,35 +617,36 @@ void chirp_z_modulator(w_iter_t W_2czN_q4_0,
 }
 template<typename w_iter_t, typename chirp_iter_t>
 void chirp_z_filter(w_iter_t W_2czN_q1_0,
-	const size_t CZ_N, const size_t FFT_N,
+	const int CZ_N, const int FFT_N,
 	chirp_iter_t F_0) {
-	for(size_t i = 0; i < CZ_N; i++) {
-		const size_t k = (i * i) % (2 * CZ_N);
+	for(int i = 0; i < CZ_N; i++) {
+		const int k = (i * i) % (2 * CZ_N);
 		w_iter_t w = W_2czN_q1_0;
 		advance(w, k);
 		F_0[i] = *w;
 	}
-	for(size_t i = 1; i < CZ_N; i++) {
-		const size_t k = (i * i) % (2 * CZ_N);
+	for(int i = 1; i < CZ_N; i++) {
+		const int k = (i * i) % (2 * CZ_N);
 		w_iter_t w = W_2czN_q1_0;
 		advance(w, k);
 		F_0[FFT_N - i] = *w;
 	}
 }
-template<typename x_iter_t, typename cz_w_it_t,
-	typename fft_w_it_t>
-void chirp_z(x_iter_t X_0, const size_t FFT_N,
-	cz_w_it_t cz_modulator, cz_w_it_t ft_cz_filter,
-	fft_w_it_t Wp4_0, fft_w_it_t Wp1_0) {
-	for(size_t i = 0; i < FFT_N / 2; i++) {
+template<typename x_iter_t, typename cz_m_it_t,
+	typename cz_f_it_t, typename fft_w_it_t>
+void chirp_z(x_iter_t X_0, const int CZ_N,
+	const size_t FFT_N, cz_m_it_t cz_modulator,
+	cz_f_it_t ft_cz_filter, fft_w_it_t Wp4_0,
+	fft_w_it_t Wp1_0) {
+	for(int i = 0; i < CZ_N; i++) {
 		X_0[i] = X_0[i] * cz_modulator[i];
 	}
 	fft_in_situ(X_0, X_0 + FFT_N, Wp4_0);
-	for(size_t i = 0; i < FFT_N; i++) {
+	for(int i = 0; i < FFT_N; i++) {
 		X_0[i] = X_0[i] * ft_cz_filter[i];
 	}
 	fft_in_situ(X_0, X_0 + FFT_N, Wp1_0);
-	for(size_t i = 0; i < FFT_N / 2; i++) {
+	for(int i = 0; i < CZ_N; i++) {
 		X_0[i] = X_0[i] * cz_modulator[i];
 	}
 }
