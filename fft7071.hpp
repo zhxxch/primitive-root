@@ -309,7 +309,8 @@ void advance(
 	advance(iter.BaseIter, n * iter.LDA);
 }
 template<typename I>
-typename I::difference_type distance(
+typename std::iterator_traits<I>::difference_type
+distance(
 	strided_iterator<I> i, strided_iterator<I> s) {
 	return (s.BaseIter - i.BaseIter) / i.LDA;
 }
@@ -433,22 +434,37 @@ requires fft_in_situ_iters<x_iter_t, x_sentinel_t,
 	}
 }
 template<typename interleave_w_it, typename sep_w_it>
-void copy_ex_w(interleave_w_it W_0,
-	interleave_w_it W_N, sep_w_it ReW0,
-	sep_w_it ImW0) {
-	const long long N = distance(W_0, W_N);
+#if __cplusplus > 201703L
+requires std::output_iterator<sep_w_it,
+	typename std::iterator_traits<
+		interleave_w_it>::value_type::value_type> &&
+	std::forward_iterator<interleave_w_it>
+#endif
+	void copy_ex_w(interleave_w_it W_0,
+		const long long Length, sep_w_it ReW0,
+		sep_w_it ImW0) {
 	*ReW0++ = 0;
 	*ImW0++ = 0;
-	for(long long L = N; L > 0; L /= 2) {
-		for(long long i = 0; i < N; i += L) {
-			*ReW0++ = std::real(W_0[i]);
-			*ImW0++ = std::imag(W_0[i]);
+	for(long long L = Length; L > 0; L /= 2) {
+		interleave_w_it w_it = W_0;
+		for(long long i = 0; i < Length; i += L) {
+			typename std::iterator_traits<
+				interleave_w_it>::value_type W
+				= *w_it;
+			*ReW0++ = std::real(W);
+			*ImW0++ = std::imag(W);
+			advance(w_it, L);
 		}
 	}
 }
 template<typename x_iter_t, typename w_iter_t>
-void fft_in_situ_sep(x_iter_t ReX0, x_iter_t ImX0,
-	w_iter_t ReW0, w_iter_t ImW0, const int N) {
+#if __cplusplus > 201703L
+requires std::contiguous_iterator<x_iter_t> &&
+	std::contiguous_iterator<w_iter_t>
+#endif
+	void fft_in_situ_sep(x_iter_t ReX0, x_iter_t ImX0,
+		w_iter_t ReW0, w_iter_t ImW0,
+		const long long N) {
 	using Component = typename std::iterator_traits<
 		x_iter_t>::value_type;
 	long long sub_ft_size = 1;
@@ -568,7 +584,7 @@ void fft_in_situ_sep(x_iter_t ReX0, x_iter_t ImX0,
 	for(; sub_ft_size < N; ReW0 += sub_ft_size,
 		ImW0 += sub_ft_size, sub_ft_size *= 2,
 		num_sub_ft /= 2, num_sub_ft_pair /= 2) {
-		for(size_t sub_ft_pos = 0; sub_ft_pos < N;
+		for(long long sub_ft_pos = 0; sub_ft_pos < N;
 			sub_ft_pos += 2 * sub_ft_size) {
 			const x_iter_t parit0_re_it
 				= ReX0 + sub_ft_pos;
@@ -605,11 +621,39 @@ void fft_in_situ_sep(x_iter_t ReX0, x_iter_t ImX0,
 		}
 	}
 }
+template<typename x_iter_t, typename w_iter_t>
+void real_conv(x_iter_t A_0, x_iter_t B_0,
+	w_iter_t ReWp1, w_iter_t ImWp1, w_iter_t ReWp4,
+	w_iter_t ImWp4, const long long N) {
+	fft_in_situ_sep(A_0, B_0, ReWp4, ImWp4, N);
+	using real_t = typename std::iterator_traits<
+		x_iter_t>::value_type;
+	A_0[0] = A_0[0] * B_0[0];
+	B_0[0] = 0;
+	A_0[N / 2] = A_0[N / 2] * B_0[N / 2];
+	B_0[N / 2] = 0;
+	for(long long i = 1; i < N / 2; i++) {
+		const real_t a = A_0[i];
+		const real_t b = B_0[i];
+		const real_t c = A_0[N - i];
+		const real_t d = B_0[N - i];
+		A_0[i] = 0.5 * (a * b + c * d);
+		B_0[i]
+			= 0.25 * (b * b + c * c - d * d - a * a);
+		A_0[N - i] = 0.5 * (a * b + c * d);
+		B_0[N - i]
+			= 0.25 * (d * d + a * a - b * b - c * c);
+	}
+	fft_in_situ_sep(A_0, B_0, ReWp1, ImWp1, N);
+	const real_t s = 1. / (real_t)N;
+#pragma omp simd
+	for(long long i = 0; i < N; i++) { A_0[i] *= s; }
+}
 template<typename w_iter_t, typename chirp_iter_t>
 void chirp_z_modulator(w_iter_t W_2czN_q4_0,
-	const int CZ_N, chirp_iter_t M_0) {
-	for(int i = 0; i < CZ_N; i++) {
-		const int k = (i * i) % (2 * CZ_N);
+	const long long CZ_N, chirp_iter_t M_0) {
+	for(long long i = 0; i < CZ_N; i++) {
+		const long long k = (i * i) % (2 * CZ_N);
 		w_iter_t w = W_2czN_q4_0;
 		advance(w, k);
 		*M_0++ = *w;
@@ -617,16 +661,16 @@ void chirp_z_modulator(w_iter_t W_2czN_q4_0,
 }
 template<typename w_iter_t, typename chirp_iter_t>
 void chirp_z_filter(w_iter_t W_2czN_q1_0,
-	const int CZ_N, const int FFT_N,
+	const long long CZ_N, const long long FFT_N,
 	chirp_iter_t F_0) {
-	for(int i = 0; i < CZ_N; i++) {
-		const int k = (i * i) % (2 * CZ_N);
+	for(long long i = 0; i < CZ_N; i++) {
+		const long long k = (i * i) % (2 * CZ_N);
 		w_iter_t w = W_2czN_q1_0;
 		advance(w, k);
 		F_0[i] = *w;
 	}
-	for(int i = 1; i < CZ_N; i++) {
-		const int k = (i * i) % (2 * CZ_N);
+	for(long long i = 1; i < CZ_N; i++) {
+		const long long k = (i * i) % (2 * CZ_N);
 		w_iter_t w = W_2czN_q1_0;
 		advance(w, k);
 		F_0[FFT_N - i] = *w;
@@ -634,19 +678,19 @@ void chirp_z_filter(w_iter_t W_2czN_q1_0,
 }
 template<typename x_iter_t, typename cz_m_it_t,
 	typename cz_f_it_t, typename fft_w_it_t>
-void chirp_z(x_iter_t X_0, const int CZ_N,
-	const size_t FFT_N, cz_m_it_t cz_modulator,
+void chirp_z(x_iter_t X_0, const long long CZ_N,
+	const long long FFT_N, cz_m_it_t cz_modulator,
 	cz_f_it_t ft_cz_filter, fft_w_it_t Wp4_0,
 	fft_w_it_t Wp1_0) {
-	for(int i = 0; i < CZ_N; i++) {
+	for(long long i = 0; i < CZ_N; i++) {
 		X_0[i] = X_0[i] * cz_modulator[i];
 	}
 	fft_in_situ(X_0, X_0 + FFT_N, Wp4_0);
-	for(int i = 0; i < FFT_N; i++) {
+	for(long long i = 0; i < FFT_N; i++) {
 		X_0[i] = X_0[i] * ft_cz_filter[i];
 	}
 	fft_in_situ(X_0, X_0 + FFT_N, Wp1_0);
-	for(int i = 0; i < CZ_N; i++) {
+	for(long long i = 0; i < CZ_N; i++) {
 		X_0[i] = X_0[i] * cz_modulator[i];
 	}
 }

@@ -1,7 +1,3 @@
-/*
-sse_f64_complex.hpp (2020) copyright, github.com/zhxxch
-*/
-#pragma once
 #include <array>
 #include <complex>
 #include <immintrin.h>
