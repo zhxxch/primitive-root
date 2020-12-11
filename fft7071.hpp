@@ -441,13 +441,13 @@ requires std::output_iterator<sep_w_it,
 	std::forward_iterator<interleave_w_it>
 #endif
 	void copy_ex_w(interleave_w_it W_0,
-		const long long Length, sep_w_it ReW0,
+		const long long W_LEN, sep_w_it ReW0,
 		sep_w_it ImW0) {
 	*ReW0++ = 0;
 	*ImW0++ = 0;
-	for(long long L = Length; L > 0; L /= 2) {
+	for(long long L = W_LEN; L > 0; L /= 2) {
 		interleave_w_it w_it = W_0;
-		for(long long i = 0; i < Length; i += L) {
+		for(long long i = 0; i < W_LEN; i += L) {
 			typename std::iterator_traits<
 				interleave_w_it>::value_type W
 				= *w_it;
