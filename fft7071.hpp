@@ -623,9 +623,9 @@ requires std::contiguous_iterator<x_iter_t> &&
 }
 template<typename x_iter_t, typename w_iter_t>
 void real_conv(x_iter_t A_0, x_iter_t B_0,
-	w_iter_t ReWp1, w_iter_t ImWp1, w_iter_t ReWp4,
-	w_iter_t ImWp4, const long long N) {
-	fft_in_situ_sep(A_0, B_0, ReWp4, ImWp4, N);
+	w_iter_t ReWpos, w_iter_t ImWpos, w_iter_t ReWneg,
+	w_iter_t ImWneg, const long long N) {
+	fft_in_situ_sep(A_0, B_0, ReWneg, ImWneg, N);
 	using real_t = typename std::iterator_traits<
 		x_iter_t>::value_type;
 	A_0[0] = A_0[0] * B_0[0];
@@ -644,34 +644,34 @@ void real_conv(x_iter_t A_0, x_iter_t B_0,
 		B_0[N - i]
 			= 0.25 * (d * d + a * a - b * b - c * c);
 	}
-	fft_in_situ_sep(A_0, B_0, ReWp1, ImWp1, N);
+	fft_in_situ_sep(A_0, B_0, ReWpos, ImWpos, N);
 	const real_t s = 1. / (real_t)N;
 #pragma omp simd
 	for(long long i = 0; i < N; i++) { A_0[i] *= s; }
 }
 template<typename w_iter_t, typename chirp_iter_t>
-void chirp_z_modulator(w_iter_t W_2czN_q4_0,
+void chirp_z_modulator(w_iter_t W_2czN_neg,
 	const long long CZ_N, chirp_iter_t M_0) {
 	for(long long i = 0; i < CZ_N; i++) {
 		const long long k = (i * i) % (2 * CZ_N);
-		w_iter_t w = W_2czN_q4_0;
+		w_iter_t w = W_2czN_neg;
 		advance(w, k);
 		*M_0++ = *w;
 	}
 }
 template<typename w_iter_t, typename chirp_iter_t>
-void chirp_z_filter(w_iter_t W_2czN_q1_0,
+void chirp_z_filter(w_iter_t W_2czN_pos,
 	const long long CZ_N, const long long FFT_N,
 	chirp_iter_t F_0) {
 	for(long long i = 0; i < CZ_N; i++) {
 		const long long k = (i * i) % (2 * CZ_N);
-		w_iter_t w = W_2czN_q1_0;
+		w_iter_t w = W_2czN_pos;
 		advance(w, k);
 		F_0[i] = *w;
 	}
 	for(long long i = 1; i < CZ_N; i++) {
 		const long long k = (i * i) % (2 * CZ_N);
-		w_iter_t w = W_2czN_q1_0;
+		w_iter_t w = W_2czN_pos;
 		advance(w, k);
 		F_0[FFT_N - i] = *w;
 	}
@@ -680,16 +680,16 @@ template<typename x_iter_t, typename cz_m_it_t,
 	typename cz_f_it_t, typename fft_w_it_t>
 void chirp_z(x_iter_t X_0, const long long CZ_N,
 	const long long FFT_N, cz_m_it_t cz_modulator,
-	cz_f_it_t ft_cz_filter, fft_w_it_t Wp4_0,
-	fft_w_it_t Wp1_0) {
+	cz_f_it_t ft_cz_filter, fft_w_it_t Wneg,
+	fft_w_it_t Wpos) {
 	for(long long i = 0; i < CZ_N; i++) {
 		X_0[i] = X_0[i] * cz_modulator[i];
 	}
-	fft_in_situ(X_0, X_0 + FFT_N, Wp4_0);
+	fft_in_situ(X_0, X_0 + FFT_N, Wneg);
 	for(long long i = 0; i < FFT_N; i++) {
 		X_0[i] = X_0[i] * ft_cz_filter[i];
 	}
-	fft_in_situ(X_0, X_0 + FFT_N, Wp1_0);
+	fft_in_situ(X_0, X_0 + FFT_N, Wpos);
 	for(long long i = 0; i < CZ_N; i++) {
 		X_0[i] = X_0[i] * cz_modulator[i];
 	}
