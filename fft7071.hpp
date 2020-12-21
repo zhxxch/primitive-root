@@ -622,32 +622,80 @@ requires std::contiguous_iterator<x_iter_t> &&
 	}
 }
 template<typename x_iter_t, typename w_iter_t>
-void real_conv(x_iter_t A_0, x_iter_t B_0,
-	w_iter_t ReWpos, w_iter_t ImWpos, w_iter_t ReWneg,
-	w_iter_t ImWneg, const long long N) {
-	fft_in_situ_sep(A_0, B_0, ReWneg, ImWneg, N);
+#if __cplusplus > 201703L
+requires std::random_access_iterator<x_iter_t> &&
+	std::random_access_iterator<w_iter_t>
+#endif
+	void analy_real_post_ft(x_iter_t ReX0, x_iter_t ImX0,
+		w_iter_t ReWneg, w_iter_t ImWneg,
+		const long long N) {
 	using real_t = typename std::iterator_traits<
 		x_iter_t>::value_type;
-	A_0[0] = A_0[0] * B_0[0];
-	B_0[0] = 0;
-	A_0[N / 2] = A_0[N / 2] * B_0[N / 2];
-	B_0[N / 2] = 0;
-	for(long long i = 1; i < N / 2; i++) {
-		const real_t a = A_0[i];
-		const real_t b = B_0[i];
-		const real_t c = A_0[N - i];
-		const real_t d = B_0[N - i];
-		A_0[i] = 0.5 * (a * b + c * d);
-		B_0[i]
-			= 0.25 * (b * b + c * c - d * d - a * a);
-		A_0[N - i] = 0.5 * (a * b + c * d);
-		B_0[N - i]
-			= 0.25 * (d * d + a * a - b * b - c * c);
+	const long long FFT_N = N / 2;
+	const real_t parit0 = ReX0[0] + ImX0[0];
+	const real_t parit1 = ReX0[0] - ImX0[0];
+	ReX0[FFT_N] = parit1;
+	ReX0[0] = parit0;
+	ImX0[0] = 0;
+	ImX0[FFT_N] = 0;
+	ImX0[FFT_N / 2] = -ImX0[FFT_N / 2];
+	for(int i = 1; i < FFT_N / 2; i++) {
+		const real_t parit0_re
+			= 0.5 * (ReX0[i] + ReX0[FFT_N - i]);
+		const real_t parit0_im
+			= 0.5 * (ImX0[i] - ImX0[FFT_N - i]);
+		const real_t parit1_re
+			= 0.5 * (ReX0[i] - ReX0[FFT_N - i]);
+		const real_t parit1_im
+			= 0.5 * (ImX0[i] + ImX0[FFT_N - i]);
+		const real_t w_re = ReWneg[i];
+		const real_t w_im = ImWneg[i];
+		ReX0[i] = parit0_re + parit1_im * w_re
+			+ parit1_re * w_im;
+		ImX0[i] = parit0_im
+			- (parit1_re * w_re - parit1_im * w_im);
+		ReX0[FFT_N - i] = parit0_re
+			+ parit1_im * (-w_re)
+			+ (-parit1_re) * w_im;
+		ImX0[FFT_N - i] = -parit0_im
+			- ((-parit1_re) * (-w_re)
+				- parit1_im * w_im);
 	}
-	fft_in_situ_sep(A_0, B_0, ReWpos, ImWpos, N);
-	const real_t s = 1. / (real_t)N;
-#pragma omp simd
-	for(long long i = 0; i < N; i++) { A_0[i] *= s; }
+}
+template<typename x_iter_t, typename w_iter_t>
+#if __cplusplus > 201703L
+requires std::random_access_iterator<x_iter_t> &&
+	std::random_access_iterator<w_iter_t>
+#endif
+	void analy_real_pre_ft(x_iter_t ReX0, x_iter_t ImX0,
+		w_iter_t ReWpos, w_iter_t ImWpos,
+		const long long N) {
+	using real_t = typename std::iterator_traits<
+		x_iter_t>::value_type;
+	const long long FFT_N = N / 2;
+	ImX0[FFT_N / 2] = -ImX0[FFT_N / 2];
+	for(int i = 0; i < FFT_N / 2; i++) {
+		const real_t parit0_re
+			= 0.5 * (ReX0[i] + ReX0[FFT_N - i]);
+		const real_t parit0_im
+			= 0.5 * (ImX0[i] - ImX0[FFT_N - i]);
+		const real_t parit1_re
+			= 0.5 * (ReX0[i] - ReX0[FFT_N - i]);
+		const real_t parit1_im
+			= 0.5 * (ImX0[i] + ImX0[FFT_N - i]);
+		const real_t w_re = ReWpos[i];
+		const real_t w_im = ImWpos[i];
+		ReX0[i] = parit0_re
+			- (parit1_re * w_im + parit1_im * w_re);
+		ImX0[i] = parit0_im + parit1_re * w_re
+			- parit1_im * w_im;
+		ReX0[FFT_N - i] = parit0_re
+			- ((-parit1_re) * w_im
+				+ parit1_im * (-w_re));
+		ImX0[FFT_N - i] = -parit0_im
+			+ (-parit1_re) * (-w_re)
+			- parit1_im * w_im;
+	}
 }
 template<typename w_iter_t, typename chirp_iter_t>
 void chirp_z_modulator(w_iter_t W_2czN_neg,
