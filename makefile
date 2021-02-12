@@ -19,4 +19,4 @@ adc.exe: $*.c
 	$(CC) $** $(CFLAGS) /Fe:$@
 
 primeq.exe: $*.c $*.h
-	$(CC) $*.c $(CFLAGS) /Fs:$@
+	$(CC) $*.c $(CFLAGS) /Fe:$@

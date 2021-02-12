@@ -1,49 +1,109 @@
 #pragma once
-void primeq_rabin_miller(const unsigned long long n,
-	unsigned long long bases[],
-	unsigned long long answs[], const int ans_len) {
-	typedef unsigned long long u64;
-	const u64 m = n - 1;
-	const u64 s = m & (~m + 1);
-	const u64 d = m / s;
+#include <stdio.h>
+inline double f64high24bit(
+	const double x, const double scalar) {
+	const double d = scalar * (1 << 24);
+	const double shr24 = x / d;
+	const double hi24 = floor(shr24) * d;
+	return hi24;
+}
+inline double f64_mul_48(const double ah,
+	const double al, const double bh,
+	const double bl) {
+	const double ll = al * bl;
+	const double m1 = ah * bl;
+	const double m2 = al * bh;
+	const double ll_hi = f64high24bit(ll, 1);
+	const double ll_lo = ll - ll_hi;
+	const double mm = m1 + m2 + ll_hi;
+	const double mm_lo
+		= mm - f64high24bit(mm, (1 << 24));
+	return mm_lo + ll_lo;
+}
+inline double f48_mul_mod(const double a,
+	const double b, const double mod_hi,
+	const double mod_lo) {
+	const double prod = a * b;
+	const double scalar
+		= floor(prod / (mod_hi + mod_lo));
+	const double a_hi = f64high24bit(a, 1);
+	const double a_lo = a - a_hi;
+	const double b_hi = f64high24bit(b, 1);
+	const double b_lo = b - b_hi;
+	const double scalar_hi = f64high24bit(scalar, 1);
+	const double scalar_lo = scalar - scalar_hi;
+	const double diff_hi
+		= a_hi * b_hi - scalar_hi * mod_hi;
+	const double diff_m1
+		= a_hi * b_lo - scalar_hi * mod_lo;
+	const double diff_m2
+		= a_lo * b_hi - scalar_lo * mod_hi;
+	const double diff_lo
+		= a_lo * b_lo - scalar_lo * mod_lo;
+	return diff_hi + diff_m1 + diff_m2 + diff_lo;
+}
+void primeq_rabin_miller(const long long n,
+	double bases[], double answs[],
+	const int ans_len) {
+	typedef long long i64;
+	const i64 m = n - 1;
+	const i64 s = m & (~m + 1);
+	const i64 d = m / s;
+	const double nn = (double)n;
+	const double nn_hi = f64high24bit(nn, 1);
+	const double nn_lo = nn - nn_hi;
 	for(int i = 0; i < ans_len; i++) { answs[i] = 1; }
-	for(u64 exp = d; exp; exp /= 2) {
+	for(i64 exp = d; exp; exp /= 2) {
 		if(exp & 1) {
 			for(int i = 0; i < ans_len; i++) {
-				answs[i] = (answs[i] * bases[i]) % n;
+				answs[i] = f48_mul_mod(
+					answs[i], bases[i], nn_hi, nn_lo);
+			}
+			for(int i = 0; i < ans_len; i++) {
+				answs[i]
+					= (answs[i] < 0 ? (answs[i] + nn)
+									: answs[i]);
 			}
 		}
 		for(int i = 0; i < ans_len; i++) {
-			bases[i] = (bases[i] * bases[i]) % n;
+			bases[i] = f48_mul_mod(
+				bases[i], bases[i], nn_hi, nn_lo);
+		}
+		for(int i = 0; i < ans_len; i++) {
+			bases[i] = (bases[i] < 0 ? (bases[i] + nn)
+									 : bases[i]);
 		}
 	}
 	for(int i = 0; i < ans_len; i++) {
 		bases[i] = ((answs[i] == 1) ? 0 : answs[i]);
 	}
-	for(u64 k = s; k; k >>= 1) {
+	for(i64 k = s; k; k >>= 1) {
 		for(int i = 0; i < ans_len; i++) {
 			answs[i] = (bases[i] == m ? 1 : answs[i]);
 		}
 		for(int i = 0; i < ans_len; i++) {
-			bases[i] = (bases[i] * bases[i]) % n;
+			bases[i] = f48_mul_mod(
+				bases[i], bases[i], nn_hi, nn_lo);
+		}
+		for(int i = 0; i < ans_len; i++) {
+			bases[i] = (bases[i] < 0 ? (bases[i] + nn)
+									 : bases[i]);
 		}
 	}
 }
 
-int primeq(unsigned long long n) {
+int primeq(const long long n) {
 	/* Ref: https://primes.utm.edu/prove/prove2_3.html */
-	typedef unsigned long long u64;
-	u64 Primes[] = {2, 3, 5, 7, 11, 13, 17, 19};
-	u64 Ans[sizeof(Primes) / sizeof(u64)];
+	double Primes[] = {2, 3, 5, 7, 11, 13, 17, 19};
+	double Ans[sizeof(Primes) / sizeof(double)];
 	if(n <= 1) return 0;
-	for(int i = 0; i < sizeof(Primes) / sizeof(u64);
+	for(int i = 0; i < sizeof(Primes) / sizeof(double);
 		i++) {
 		if(n == Primes[i]) return (1);
-		if((n % Primes[i]) == 0) return (0);
 	}
-	primeq_rabin_miller(
-		n, Primes, Ans, sizeof(Ans) / sizeof(u64));
-	for(int i = 0; i < sizeof(Ans) / sizeof(u64);
+	primeq_rabin_miller(n & ((1ll << 48) - 1), Primes,
+		Ans, sizeof(Ans) / sizeof(double));
+	for(int i = 0; i < sizeof(Ans) / sizeof(double);
 		i++) {
 		if(Ans[i] != 1) return 0;
 	}
