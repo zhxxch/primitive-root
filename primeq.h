@@ -7,19 +7,6 @@ inline double f64high24bit(
 	const double hi24 = floor(shr24) * d;
 	return hi24;
 }
-inline double f64_mul_48(const double ah,
-	const double al, const double bh,
-	const double bl) {
-	const double ll = al * bl;
-	const double m1 = ah * bl;
-	const double m2 = al * bh;
-	const double ll_hi = f64high24bit(ll, 1);
-	const double ll_lo = ll - ll_hi;
-	const double mm = m1 + m2 + ll_hi;
-	const double mm_lo
-		= mm - f64high24bit(mm, (1 << 24));
-	return mm_lo + ll_lo;
-}
 inline double f48_mul_mod(const double a,
 	const double b, const double mod_hi,
 	const double mod_lo) {
@@ -69,6 +56,11 @@ void primeq_rabin_miller(const double n,
 					= (answs[i] < 0 ? (answs[i] + n)
 									: answs[i]);
 			}
+			for(int i = 0; i < ans_len; i++) {
+				answs[i]
+					= (answs[i] >= n ? (answs[i] - n)
+									 : answs[i]);
+			}
 		}
 		for(int i = 0; i < ans_len; i++) {
 			bases[i] = f48_mul_mod(
@@ -77,6 +69,10 @@ void primeq_rabin_miller(const double n,
 		for(int i = 0; i < ans_len; i++) {
 			bases[i] = (bases[i] < 0 ? (bases[i] + n)
 									 : bases[i]);
+		}
+		for(int i = 0; i < ans_len; i++) {
+			bases[i] = (bases[i] >= n ? (bases[i] - n)
+									  : bases[i]);
 		}
 	}
 	for(int i = 0; i < ans_len; i++) {
@@ -94,6 +90,10 @@ void primeq_rabin_miller(const double n,
 		for(int i = 0; i < ans_len; i++) {
 			bases[i] = (bases[i] < 0 ? (bases[i] + n)
 									 : bases[i]);
+		}
+		for(int i = 0; i < ans_len; i++) {
+			bases[i] = (bases[i] >= n ? (bases[i] - n)
+									  : bases[i]);
 		}
 	}
 }

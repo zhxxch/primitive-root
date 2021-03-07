@@ -29,8 +29,6 @@ int main(int ac, char *av[]) {
 		const double mod_lo = N2 - mod_hi;
 		const double ans
 			= f48_mul_mod(a, b, mod_hi, mod_lo);
-		const double prod
-			= f64_mul_48(a_hi, a_lo, b_hi, b_lo);
 		printf("%f\n", ans);
 		return 0;
 	}
