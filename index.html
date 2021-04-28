@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 <title>FFT7071专栏</title>
 <body class="markdown-body">
-<header><p id="header-img"><img src="https://annex.inv.ariant.cn/images/7071.png" alt="7071"></p><hr>
+<header><p id="header-img"><img src="images/7071.png" alt="7071"></p><hr>
 <p>7071专栏是快速傅里叶变换（FFT）相关话题的文集。由<a href="https://github.com/zhxxch">zhxxch</a>在<a href="https://fourier.v.ariant.cn">fourier.v.ariant.cn</a>以CC-BY-SA许可发布。</p>
 
 <p>目录：</p>
@@ -182,11 +182,11 @@ $$Q_{N-i-1}^0=I_{2^i}⊗R_{2^{N-i}}$$</p>
 <p>已知一次蝶形运算的迭代$T_{i+1}$的作用是：将两个长度为$2^i$的DFT结果作为奇偶两部分，合并为长度为$2^{i+1}$的DFT结果，这样的奇偶对共有$2^{N-i-1}$个。</p>
 <p>令$T_{i+1}$中单个蝶形运算的偶、奇两个输入分别是$\mathbf{x}[t]$和$\mathbf{x}[t+2^i]$，$Q_{N-i-1}^i$会将$\mathbf{x}[s]$与$\mathbf{x}[s+2^{i}(2^{N-2i-1}-1)]$对换。取$s=t+2^i$，则$\mathbf{x}[t+2^i]$将与$\mathbf{x}[t+2^{N-i-1}]$对换。在$i&lt;(N-1)/2$的情况下，$\mathbf{x}[t+2^{N-i-1}]$与$\mathbf{x}[t+2^{N-i-1}+2^i]$分别是另一蝶形运算的偶、奇输入。</p>
 <p>可见$T_{i+1}Q_{N-i-1}^{i}$中，输入数据地址相差$2^{N-(i+1)}$的两个蝶形运算是成对的，第一个蝶形运算的奇数项输入与第二个蝶形运算的偶数项输入对换。如下图所示：</p>
-<p><img src="https://annex.inv.ariant.cn/images/coupled-butterfly.png" alt="coupled-butterfly" /></p>
+<p><img src="images/coupled-butterfly.png" alt="coupled-butterfly" /></p>
 <p>下图中画出来N=16的基数2变换，输入和输出的顺序均是正确的；图中用颜色标出了某些蝶形运算，使蝶形运算的配对更清晰。注意其中成对蝶形运算的4个输入输出均在原地，并且与传统Cooley-Tukey算法相比没有计算量的差别。</p>
-<p><img src="https://annex.inv.ariant.cn/images/fft-self-sorting.png" alt="self-sorting-fft" /></p>
+<p><img src="images/fft-self-sorting.png" alt="self-sorting-fft" /></p>
 <p>下图是作为对比的传统Cooley-Tukey算法。</p>
-<p><img src="https://annex.inv.ariant.cn/images/fft-dit.png" alt="dit-fft" /></p>
+<p><img src="images/fft-dit.png" alt="dit-fft" /></p>
 <h2>附录：本文算法的C++实现</h2>
 <pre><code>/* copyright 2020, github.com/zhxxch, all rights reserved. */
 #include &lt;complex&gt;
